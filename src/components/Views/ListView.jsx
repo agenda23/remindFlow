@@ -163,7 +163,7 @@ const ListView = ({
           return 0;
       }
     });
-  }, [schedules, searchTerm, filterCategory, filterPriority, filterStatus, sortBy, advancedFilters]);
+  }, [schedules, searchTerm, filterCategory, filterPriority, filterStatus, sortBy, advancedFilters, timeframe]);
 
   // 全選択/全解除
   const handleSelectAll = (checked) => {

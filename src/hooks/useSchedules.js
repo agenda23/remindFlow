@@ -83,8 +83,13 @@ export const useSchedules = () => {
   }, [schedules]);
 
   // 予定のフィルタリング
-  const filterSchedules = useCallback((filters) => {
-    return schedules.filter(schedule => {
+  // 後方互換のため第1引数に配列が来た場合はその配列を対象にフィルタ、
+  // そうでない場合は内部の schedules を対象にフィルタする
+  const filterSchedules = useCallback((scheduleListOrFilters, maybeFilters) => {
+    const targetList = Array.isArray(scheduleListOrFilters) ? scheduleListOrFilters : schedules;
+    const filters = Array.isArray(scheduleListOrFilters) ? (maybeFilters || {}) : (scheduleListOrFilters || {});
+
+    return targetList.filter(schedule => {
       // カテゴリフィルター
       if (filters.categories && filters.categories.length > 0) {
         if (!filters.categories.includes(schedule.category)) {
