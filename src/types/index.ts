@@ -9,6 +9,7 @@ export interface Schedule {
   category: 'work' | 'personal' | 'family' | 'other';
   priority: 'high' | 'medium' | 'low';
   status?: 'pending' | 'completed';
+  archived?: boolean; // 自動/手動アーカイブ判定用
   reminder: {
     enabled: boolean;
     minutesBefore: number;

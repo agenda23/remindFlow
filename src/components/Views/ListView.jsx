@@ -19,7 +19,7 @@ const ListView = ({
   const [sortBy, setSortBy] = useState('time');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all' | 'not_started' | 'ongoing' | 'completed' | 'archived'
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -38,7 +38,9 @@ const ListView = ({
         setSortBy(saved.sortBy || 'time');
         setFilterCategory(saved.filterCategory || 'all');
         setFilterPriority(saved.filterPriority || 'all');
-        setFilterStatus(saved.filterStatus || 'all');
+        // 後方互換: 旧 'pending' は 'not_started' に読み替え
+        const restoredStatus = saved.filterStatus === 'pending' ? 'not_started' : (saved.filterStatus || 'all');
+        setFilterStatus(restoredStatus);
         setAdvancedFilters(saved.advancedFilters || { dateRange: { start: '', end: '' }, searchMode: 'AND' });
         setTimeframe(saved.timeframe || 'all');
       }
@@ -67,6 +69,21 @@ const ListView = ({
   // フィルタリングとソート済みの予定リスト
   const filteredAndSortedSchedules = useMemo(() => {
     let filtered = schedules;
+    const now = new Date();
+
+    const deriveStatus = (s) => {
+      if (s.archived) return 'archived';
+      if (s.status === 'completed') return 'completed';
+      try {
+        const start = new Date(`${s.date}T${s.time}`);
+        const end = s.endTime ? new Date(`${s.date}T${s.endTime}`) : new Date(start.getTime() + 60 * 60 * 1000);
+        if (now < start) return 'not_started';
+        if (now >= start && now < end) return 'ongoing';
+        return 'archived';
+      } catch {
+        return 'not_started';
+      }
+    };
 
     // 検索フィルター
     if (searchTerm.trim()) {
@@ -88,9 +105,9 @@ const ListView = ({
       filtered = filtered.filter(schedule => schedule.priority === filterPriority);
     }
 
-    // ステータスフィルター
+    // ステータスフィルター（未開始/進行中/完了/アーカイブ）
     if (filterStatus !== 'all') {
-      filtered = filtered.filter(schedule => (schedule.status || 'pending') === filterStatus);
+      filtered = filtered.filter((s) => deriveStatus(s) === filterStatus);
     }
 
     // 表示範囲（全て/今日/今週/今月）
@@ -351,8 +368,10 @@ const ListView = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">すべて</SelectItem>
-                    <SelectItem value="pending">未完了</SelectItem>
+                    <SelectItem value="not_started">未開始</SelectItem>
+                    <SelectItem value="ongoing">進行中</SelectItem>
                     <SelectItem value="completed">完了</SelectItem>
+                    <SelectItem value="archived">アーカイブ</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

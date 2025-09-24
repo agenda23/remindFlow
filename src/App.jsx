@@ -123,13 +123,14 @@ function App() {
     } else {
       const saved = addSchedule({
         status: 'pending',
+        archived: false,
         ...scheduleData
       });
       // 繰り返し予定の生成
       if (scheduleData.recurrence && scheduleData.recurrence.type !== 'none' && scheduleData.recurrence.endDate) {
         const recurrences = generateRecurringSchedules(saved, scheduleData.recurrence.endDate);
         if (recurrences && recurrences.length > 0) {
-          recurrences.forEach(s => addSchedule({ status: 'pending', ...s }));
+          recurrences.forEach(s => addSchedule({ status: 'pending', archived: false, ...s }));
         }
       }
     }
@@ -155,6 +156,7 @@ function App() {
       category: item.category || 'personal',
       priority: item.priority || 'medium',
       status: item.status || 'pending',
+      archived: item.archived ?? false,
       reminder: {
         enabled: item.reminder?.enabled ?? true,
         minutesBefore: item.reminder?.minutesBefore ?? 15,

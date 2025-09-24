@@ -76,6 +76,7 @@ const CalendarView = ({
   }, [currentDate, schedules]);
 
   const displayDays = viewMode === 'month' ? calendarDays : weekDays;
+  const todayStr = formatLocalDateYYYYMMDD(new Date());
 
   // 前の月/週に移動
   const goToPrevious = () => {
@@ -242,21 +243,34 @@ const CalendarView = ({
 
               {/* 予定リスト */}
               <div className="space-y-1">
-                {day.schedules.slice(0, viewMode === 'month' ? 3 : 8).map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className={`
-                      text-xs p-1 rounded cursor-pointer truncate
-                      ${getPriorityColor(schedule.priority)} text-white
-                      hover:opacity-80 transition-opacity
-                    `}
-                    onClick={(e) => handleScheduleClick(e, schedule)}
-                    title={`${schedule.time} ${schedule.title}`}
-                  >
-                    <span className="font-medium">{schedule.time}</span>
-                    <span className="ml-1">{schedule.title}</span>
-                  </div>
-                ))}
+                {day.schedules.slice(0, viewMode === 'month' ? 3 : 8).map((schedule) => {
+                  const now = new Date();
+                  const isSameDay = day.dateStr === todayStr;
+                  let isOngoing = false;
+                  if (isSameDay && schedule.status !== 'completed' && !schedule.archived) {
+                    try {
+                      const start = new Date(`${schedule.date}T${schedule.time}`);
+                      const end = schedule.endTime ? new Date(`${schedule.date}T${schedule.endTime}`) : new Date(start.getTime() + 60 * 60 * 1000);
+                      isOngoing = now >= start && now < end;
+                    } catch {}
+                  }
+                  return (
+                    <div
+                      key={schedule.id}
+                      className={`
+                        text-xs p-1 rounded cursor-pointer truncate
+                        ${getPriorityColor(schedule.priority)} text-white
+                        hover:opacity-80 transition-opacity
+                        ${isOngoing ? 'ring-2 ring-blue-300' : ''}
+                      `}
+                      onClick={(e) => handleScheduleClick(e, schedule)}
+                      title={`${schedule.time} ${schedule.title}`}
+                    >
+                      <span className="font-medium">{schedule.time}</span>
+                      <span className="ml-1">{schedule.title}</span>
+                    </div>
+                  );
+                })}
                 {day.schedules.length > (viewMode === 'month' ? 3 : 8) && (
                   <div className="text-xs text-gray-500 text-center">
                     +{day.schedules.length - (viewMode === 'month' ? 3 : 8)}件

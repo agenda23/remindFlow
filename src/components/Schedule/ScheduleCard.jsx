@@ -10,6 +10,29 @@ const ScheduleCard = ({
   onComplete,
   className = '' 
 }) => {
+  const now = new Date();
+  const getTimes = (s) => {
+    try {
+      const start = new Date(`${s.date}T${s.time}`);
+      const end = s.endTime ? new Date(`${s.date}T${s.endTime}`) : new Date(start.getTime() + 60 * 60 * 1000);
+      return { start, end };
+    } catch {
+      return { start: null, end: null };
+    }
+  };
+
+  const deriveStatus = (s) => {
+    if (s.archived) return 'archived';
+    if (s.status === 'completed') return 'completed';
+    const { start, end } = getTimes(s);
+    if (!start || !end) return 'not_started';
+    if (now < start) return 'not_started';
+    if (now >= start && now < end) return 'ongoing';
+    return 'archived';
+  };
+
+  const status = deriveStatus(schedule);
+  const isOngoing = status === 'ongoing';
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200';
@@ -58,8 +81,10 @@ const ScheduleCard = ({
   return (
     <div 
       className={`
-        bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
+        relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
         hover:shadow-md transition-all duration-200 cursor-pointer
+        ${isOngoing ? 'ring-2 ring-blue-300' : ''}
+        ${status === 'archived' ? 'opacity-70' : ''}
         ${className}
       `}
       onClick={onClick}
@@ -150,6 +175,16 @@ const ScheduleCard = ({
           >
             優先度: {getPriorityLabel(schedule.priority)}
           </Badge>
+          {isOngoing && (
+            <Badge variant="outline" className="bg-blue-100 text-blue-800">
+              進行中
+            </Badge>
+          )}
+          {status === 'archived' && (
+            <Badge variant="outline" className="bg-gray-100 text-gray-800">
+              アーカイブ
+            </Badge>
+          )}
           {schedule.recurrence.type !== 'none' && (
             <Badge variant="outline" className="bg-indigo-100 text-indigo-800">
               繰り返し
@@ -161,10 +196,14 @@ const ScheduleCard = ({
       {/* 左側の色付きボーダー（優先度/ステータス表示） */}
       <div className={`
         absolute left-0 top-0 bottom-0 w-1 rounded-l-lg
-        ${schedule.status === 'completed' 
-          ? 'bg-green-600' 
-          : schedule.priority === 'high' ? 'bg-red-500' : 
-            schedule.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}
+        ${status === 'archived'
+          ? 'bg-gray-400'
+          : schedule.status === 'completed'
+            ? 'bg-green-600'
+            : isOngoing
+              ? 'bg-blue-600'
+              : schedule.priority === 'high' ? 'bg-red-500' : 
+                schedule.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}
       `} />
     </div>
   );

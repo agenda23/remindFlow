@@ -4,6 +4,7 @@ import { saveSchedules, loadSchedules } from '../utils/storage';
 export const useSchedules = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const DEFAULT_DURATION_MINUTES = 60; // endTimeがない場合の仮想終了時間
 
   // 初期データの読み込み
   useEffect(() => {
@@ -28,6 +29,34 @@ export const useSchedules = () => {
     }
   }, [schedules, loading]);
 
+  // 終了済み予定の自動アーカイブ
+  useEffect(() => {
+    if (loading) return;
+
+    const archiveEnded = () => {
+      const now = new Date();
+      setSchedules(prev => prev.map(schedule => {
+        if (schedule.archived) return schedule;
+        try {
+          const start = new Date(`${schedule.date}T${schedule.time}`);
+          const end = schedule.endTime
+            ? new Date(`${schedule.date}T${schedule.endTime}`)
+            : new Date(start.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
+          if (now > end) {
+            return { ...schedule, archived: true };
+          }
+        } catch {}
+        return schedule;
+      }));
+    };
+
+    // 起動時に一度実行
+    archiveEnded();
+    // 60秒間隔でチェック
+    const timer = setInterval(archiveEnded, 60 * 1000);
+    return () => clearInterval(timer);
+  }, [loading]);
+
   // 予定の追加
   const addSchedule = useCallback((schedule) => {
     const newSchedule = {
@@ -35,6 +64,7 @@ export const useSchedules = () => {
       id: schedule.id || `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
     
+    if (newSchedule.archived === undefined) newSchedule.archived = false;
     setSchedules(prev => [...prev, newSchedule]);
     return newSchedule;
   }, []);
