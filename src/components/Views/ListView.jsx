@@ -230,10 +230,30 @@ const ListView = ({
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">表示範囲</label>
             <ToggleGroup type="single" value={timeframe} onValueChange={(v) => v && setTimeframe(v)} variant="outline" size="sm">
-              <ToggleGroupItem value="all">全て</ToggleGroupItem>
-              <ToggleGroupItem value="today">今日</ToggleGroupItem>
-              <ToggleGroupItem value="week">今週</ToggleGroupItem>
-              <ToggleGroupItem value="month">今月</ToggleGroupItem>
+              <ToggleGroupItem
+                value="all"
+                className="data-[state=on]:!bg-blue-600 data-[state=on]:!text-white data-[state=on]:!border-blue-600 dark:data-[state=on]:!bg-blue-500 dark:data-[state=on]:!border-blue-500"
+              >
+                全て
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="today"
+                className="data-[state=on]:!bg-blue-600 data-[state=on]:!text-white data-[state=on]:!border-blue-600 dark:data-[state=on]:!bg-blue-500 dark:data-[state=on]:!border-blue-500"
+              >
+                今日
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="week"
+                className="data-[state=on]:!bg-blue-600 data-[state=on]:!text-white data-[state=on]:!border-blue-600 dark:data-[state=on]:!bg-blue-500 dark:data-[state=on]:!border-blue-500"
+              >
+                今週
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="month"
+                className="data-[state=on]:!bg-blue-600 data-[state=on]:!text-white data-[state=on]:!border-blue-600 dark:data-[state=on]:!bg-blue-500 dark:data-[state=on]:!border-blue-500"
+              >
+                今月
+              </ToggleGroupItem>
             </ToggleGroup>
           </div>
 
