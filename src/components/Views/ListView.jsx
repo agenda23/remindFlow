@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatLocalDateYYYYMMDD, parseLocalDateYYYYMMDD } from '@/lib/utils';
 import ScheduleCard from '../Schedule/ScheduleCard';
 
 const ListView = ({ 
@@ -24,6 +26,7 @@ const ListView = ({
     dateRange: { start: '', end: '' },
     searchMode: 'AND'
   });
+  const [timeframe, setTimeframe] = useState('all'); // 'all' | 'today' | 'week' | 'month'
 
   // フィルタ状態の保存/復元
   useEffect(() => {
@@ -37,6 +40,7 @@ const ListView = ({
         setFilterPriority(saved.filterPriority || 'all');
         setFilterStatus(saved.filterStatus || 'all');
         setAdvancedFilters(saved.advancedFilters || { dateRange: { start: '', end: '' }, searchMode: 'AND' });
+        setTimeframe(saved.timeframe || 'all');
       }
     } catch {
       // noop
@@ -51,13 +55,14 @@ const ListView = ({
         filterCategory,
         filterPriority,
         filterStatus,
-        advancedFilters
+        advancedFilters,
+        timeframe
       };
       localStorage.setItem('remindflow_list_filters', JSON.stringify(toSave));
     } catch {
       // noop
     }
-  }, [searchTerm, sortBy, filterCategory, filterPriority, filterStatus, advancedFilters]);
+  }, [searchTerm, sortBy, filterCategory, filterPriority, filterStatus, advancedFilters, timeframe]);
 
   // フィルタリングとソート済みの予定リスト
   const filteredAndSortedSchedules = useMemo(() => {
@@ -86,6 +91,38 @@ const ListView = ({
     // ステータスフィルター
     if (filterStatus !== 'all') {
       filtered = filtered.filter(schedule => (schedule.status || 'pending') === filterStatus);
+    }
+
+    // 表示範囲（全て/今日/今週/今月）
+    if (timeframe !== 'all') {
+      const today = new Date();
+      if (timeframe === 'today') {
+        const todayStr = formatLocalDateYYYYMMDD(today);
+        filtered = filtered.filter((s) => s.date === todayStr);
+      } else if (timeframe === 'week') {
+        // 今週: 月曜始まり〜日曜終わり
+        const day = today.getDay(); // 0(日)〜6(土)
+        const diffToMonday = (day + 6) % 7; // 月曜=0
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - diffToMonday);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        filtered = filtered.filter((s) => {
+          const d = parseLocalDateYYYYMMDD(s.date);
+          return d >= weekStart && d <= weekEnd;
+        });
+      } else if (timeframe === 'month') {
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        monthStart.setHours(0, 0, 0, 0);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        monthEnd.setHours(23, 59, 59, 999);
+        filtered = filtered.filter((s) => {
+          const d = parseLocalDateYYYYMMDD(s.date);
+          return d >= monthStart && d <= monthEnd;
+        });
+      }
     }
 
     // 高度検索（日付範囲 + AND/OR）
@@ -163,6 +200,7 @@ const ListView = ({
     setFilterStatus('all');
     setSortBy('time');
     setAdvancedFilters({ dateRange: { start: '', end: '' }, searchMode: 'AND' });
+    setTimeframe('all');
   };
 
   // ラベル関数は未使用のため削除（必要になれば再導入）
@@ -188,6 +226,17 @@ const ListView = ({
       {/* 検索とフィルター */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
         <div className="space-y-4">
+          {/* 表示範囲トグル */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">表示範囲</label>
+            <ToggleGroup type="single" value={timeframe} onValueChange={(v) => v && setTimeframe(v)} variant="outline" size="sm">
+              <ToggleGroupItem value="all">全て</ToggleGroupItem>
+              <ToggleGroupItem value="today">今日</ToggleGroupItem>
+              <ToggleGroupItem value="week">今週</ToggleGroupItem>
+              <ToggleGroupItem value="month">今月</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
           {/* 検索バー */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
