@@ -1,4 +1,4 @@
-import { Clock, Bell, Edit, Trash2, Calendar } from 'lucide-react';
+import { Clock, Bell, Edit, Trash2, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -7,6 +7,7 @@ const ScheduleCard = ({
   onEdit, 
   onDelete, 
   onClick,
+  onComplete,
   className = '' 
 }) => {
   const getPriorityColor = (priority) => {
@@ -82,6 +83,18 @@ const ScheduleCard = ({
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
+                onComplete?.(schedule.id, schedule.status !== 'completed');
+              }}
+              className={`h-8 w-8 p-0 ${schedule.status === 'completed' ? 'text-green-600' : ''}`}
+              title={schedule.status === 'completed' ? '未完了に戻す' : '完了にする'}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
                 onEdit(schedule);
               }}
               className="h-8 w-8 p-0"
@@ -110,7 +123,10 @@ const ScheduleCard = ({
           </div>
           <div className="flex items-center space-x-1">
             <Clock className="h-4 w-4" />
-            <span>{schedule.time}</span>
+            <span>
+              {schedule.time}
+              {schedule.endTime ? ` - ${schedule.endTime}` : ''}
+            </span>
           </div>
           {schedule.reminder.enabled && (
             <div className="flex items-center space-x-1">
@@ -142,11 +158,13 @@ const ScheduleCard = ({
         </div>
       </div>
 
-      {/* 左側の色付きボーダー（優先度表示） */}
+      {/* 左側の色付きボーダー（優先度/ステータス表示） */}
       <div className={`
         absolute left-0 top-0 bottom-0 w-1 rounded-l-lg
-        ${schedule.priority === 'high' ? 'bg-red-500' : 
-          schedule.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}
+        ${schedule.status === 'completed' 
+          ? 'bg-green-600' 
+          : schedule.priority === 'high' ? 'bg-red-500' : 
+            schedule.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}
       `} />
     </div>
   );

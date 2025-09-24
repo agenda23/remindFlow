@@ -50,6 +50,17 @@ export const useSchedules = () => {
     );
   }, []);
 
+  // 予定の完了
+  const completeSchedule = useCallback((scheduleId, completed = true) => {
+    setSchedules(prev => 
+      prev.map(schedule => 
+        schedule.id === scheduleId 
+          ? { ...schedule, status: completed ? 'completed' : 'pending' }
+          : schedule
+      )
+    );
+  }, []);
+
   // 予定の削除
   const deleteSchedule = useCallback((scheduleId) => {
     setSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId));
@@ -221,7 +232,8 @@ export const useSchedules = () => {
     getTodaySchedules,
     getUpcomingSchedules,
     getPastSchedules,
-    generateRecurringSchedules
+    generateRecurringSchedules,
+    completeSchedule
   };
 };
 

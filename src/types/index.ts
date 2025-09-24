@@ -5,8 +5,10 @@ export interface Schedule {
   description?: string;
   date: string; // YYYY-MM-DD形式
   time: string; // HH:MM形式
+  endTime?: string; // HH:MM形式（終了時刻）
   category: 'work' | 'personal' | 'family' | 'other';
   priority: 'high' | 'medium' | 'low';
+  status?: 'pending' | 'completed';
   reminder: {
     enabled: boolean;
     minutesBefore: number;

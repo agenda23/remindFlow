@@ -18,6 +18,7 @@ const ScheduleForm = ({
     description: '',
     date: '',
     time: '',
+    endTime: '',
     category: 'personal',
     priority: 'medium',
     reminder: {
@@ -36,7 +37,10 @@ const ScheduleForm = ({
 
   useEffect(() => {
     if (schedule) {
-      setFormData(schedule);
+      setFormData({
+        ...schedule,
+        endTime: schedule.endTime || ''
+      });
     } else {
       // 新規作成時のデフォルト値
       const now = new Date();
@@ -46,7 +50,8 @@ const ScheduleForm = ({
       setFormData(prev => ({
         ...prev,
         date: today,
-        time: currentTime
+        time: currentTime,
+        endTime: ''
       }));
     }
   }, [schedule]);
@@ -64,6 +69,15 @@ const ScheduleForm = ({
     
     if (!formData.time) {
       newErrors.time = '時間は必須です';
+    }
+
+    // 終了時間のチェック（あれば開始より後）
+    if (formData.endTime) {
+      const start = new Date(`${formData.date}T${formData.time}`);
+      const end = new Date(`${formData.date}T${formData.endTime}`);
+      if (end <= start) {
+        newErrors.endTime = '終了時間は開始時間より後である必要があります';
+      }
     }
 
     // 過去の日時チェック
@@ -208,6 +222,23 @@ const ScheduleForm = ({
                 )}
               </div>
             </div>
+
+          <div>
+            <Label htmlFor="endTime">終了時間</Label>
+            <div className="relative">
+              <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                id="endTime"
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => handleInputChange('endTime', e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {errors.endTime && (
+              <p className="text-sm text-red-600 mt-1">{errors.endTime}</p>
+            )}
+          </div>
 
             {errors.datetime && (
               <p className="text-sm text-red-600">{errors.datetime}</p>

@@ -8,7 +8,10 @@ const Dashboard = ({
   schedules, 
   onAddSchedule, 
   onEditSchedule, 
-  onDeleteSchedule 
+  onDeleteSchedule,
+  onViewChange,
+  onOpenSettings,
+  onCompleteSchedule
 }) => {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
@@ -190,6 +193,7 @@ const Dashboard = ({
                     schedule={schedule}
                     onEdit={onEditSchedule}
                     onDelete={onDeleteSchedule}
+                    onComplete={(id, completed) => onCompleteSchedule?.(id, completed)}
                     className="shadow-none border-0 bg-gray-50 dark:bg-gray-700"
                   />
                 ))}
@@ -228,6 +232,7 @@ const Dashboard = ({
                     schedule={schedule}
                     onEdit={onEditSchedule}
                     onDelete={onDeleteSchedule}
+                    onComplete={(id, completed) => onCompleteSchedule?.(id, completed)}
                     className="shadow-none border-0 bg-gray-50 dark:bg-gray-700"
                   />
                 ))}
@@ -268,7 +273,7 @@ const Dashboard = ({
             <Button 
               variant="outline" 
               className="h-20 flex-col space-y-2"
-              onClick={() => {/* カレンダービューに切り替え */}}
+              onClick={() => onViewChange?.('calendar')}
             >
               <Calendar className="h-6 w-6" />
               <span>カレンダー表示</span>
@@ -276,7 +281,7 @@ const Dashboard = ({
             <Button 
               variant="outline" 
               className="h-20 flex-col space-y-2"
-              onClick={() => {/* 設定画面を開く */}}
+              onClick={() => onOpenSettings?.()}
             >
               <Bell className="h-6 w-6" />
               <span>通知設定</span>

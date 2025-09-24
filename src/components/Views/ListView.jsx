@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, SortAsc, Plus, Trash2, Calendar } from 'lucide-react';
+import { Search, Filter, SortAsc, Plus, Trash2, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,12 +10,14 @@ const ListView = ({
   schedules, 
   onAddSchedule, 
   onEditSchedule, 
-  onDeleteSchedule 
+  onDeleteSchedule,
+  onCompleteSchedule
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('time');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -40,6 +42,11 @@ const ListView = ({
     // 優先度フィルター
     if (filterPriority !== 'all') {
       filtered = filtered.filter(schedule => schedule.priority === filterPriority);
+    }
+
+    // ステータスフィルター
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(schedule => (schedule.status || 'pending') === filterStatus);
     }
 
     // ソート
@@ -226,6 +233,22 @@ const ListView = ({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  ステータス
+                </label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">すべて</SelectItem>
+                    <SelectItem value="pending">未完了</SelectItem>
+                    <SelectItem value="completed">完了</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
         </div>
@@ -287,6 +310,7 @@ const ListView = ({
                     schedule={schedule}
                     onEdit={onEditSchedule}
                     onDelete={onDeleteSchedule}
+                    onComplete={(id, completed) => onCompleteSchedule?.(id, completed)}
                   />
                 </div>
               </div>

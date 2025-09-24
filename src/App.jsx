@@ -8,6 +8,8 @@ import Dashboard from './components/Views/Dashboard';
 import CalendarView from './components/Views/CalendarView';
 import ListView from './components/Views/ListView';
 import ScheduleForm from './components/Schedule/ScheduleForm';
+import SettingsModal from './components/Settings/SettingsModal';
+import { calculateReminderTime } from './utils/notifications';
 
 // Hooks
 import { useSchedules } from './hooks/useSchedules';
@@ -18,6 +20,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     categories: [],
@@ -32,13 +35,18 @@ function App() {
     updateSchedule,
     deleteSchedule,
     searchSchedules,
-    filterSchedules
+    filterSchedules,
+    generateRecurringSchedules
   } = useSchedules();
 
   const {
     notificationPermission,
     requestPermission,
-    toggleNotifications
+    toggleNotifications,
+    checkReminders,
+    testNotification,
+    settings: notificationSettings,
+    isSupported: isNotificationSupported
   } = useNotifications(schedules);
 
   // 通知許可の初期要求
@@ -47,6 +55,28 @@ function App() {
       requestPermission();
     }
   }, [notificationPermission, requestPermission]);
+
+  // 通知バッジ用の現在時刻を更新（1分ごと）
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 今日これからのリマインダー数
+  const todayStr = new Date().toISOString().split('T')[0];
+  const notificationEnabled = !!notificationSettings?.enabled;
+  const upcomingReminderCount = schedules.filter((s) => {
+    if (!notificationEnabled) return false;
+    if (!s.reminder?.enabled) return false;
+    if (s.date !== todayStr) return false;
+    try {
+      const reminderTime = calculateReminderTime(s);
+      return reminderTime.getTime() > now.getTime();
+    } catch {
+      return false;
+    }
+  }).length;
 
   // フィルタリングされた予定リスト
   const filteredSchedules = filterSchedules(
@@ -77,7 +107,17 @@ function App() {
     if (editingSchedule) {
       updateSchedule(editingSchedule.id, scheduleData);
     } else {
-      addSchedule(scheduleData);
+      const saved = addSchedule({
+        status: 'pending',
+        ...scheduleData
+      });
+      // 繰り返し予定の生成
+      if (scheduleData.recurrence && scheduleData.recurrence.type !== 'none' && scheduleData.recurrence.endDate) {
+        const recurrences = generateRecurringSchedules(saved, scheduleData.recurrence.endDate);
+        if (recurrences && recurrences.length > 0) {
+          recurrences.forEach(s => addSchedule({ status: 'pending', ...s }));
+        }
+      }
     }
   };
 
@@ -86,6 +126,39 @@ function App() {
     if (window.confirm('この予定を削除しますか？')) {
       deleteSchedule(scheduleId);
     }
+  };
+
+  // スケジュールの一括インポート（JSON）
+  const handleImportSchedules = (imported) => {
+    if (!Array.isArray(imported)) return;
+    const normalized = imported.map(item => ({
+      id: item.id || `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: item.title || '',
+      description: item.description || '',
+      date: item.date,
+      time: item.time,
+      endTime: item.endTime || '',
+      category: item.category || 'personal',
+      priority: item.priority || 'medium',
+      status: item.status || 'pending',
+      reminder: {
+        enabled: item.reminder?.enabled ?? true,
+        minutesBefore: item.reminder?.minutesBefore ?? 15,
+        sound: item.reminder?.sound || 'chime',
+        repeat: item.reminder?.repeat ?? false
+      },
+      recurrence: {
+        type: item.recurrence?.type || 'none',
+        endDate: item.recurrence?.endDate || ''
+      }
+    }));
+    normalized.forEach(s => addSchedule(s));
+  };
+
+  // 予定の完了/未完了切替
+  const { completeSchedule } = useSchedules();
+  const handleCompleteSchedule = (scheduleId, completed) => {
+    completeSchedule(scheduleId, completed);
   };
 
   // ビューの切り替え
@@ -101,7 +174,7 @@ function App() {
 
   // 設定画面を開く（今後実装）
   const handleSettingsOpen = () => {
-    console.log('設定画面を開く');
+    setSettingsOpen(true);
   };
 
   // 日付選択時の処理（カレンダーから）
@@ -139,13 +212,13 @@ function App() {
 
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard {...commonProps} />;
+        return <Dashboard {...commonProps} onViewChange={handleViewChange} onOpenSettings={handleSettingsOpen} onCompleteSchedule={handleCompleteSchedule} />;
       case 'calendar':
         return <CalendarView {...commonProps} onDateSelect={handleDateSelect} />;
       case 'list':
-        return <ListView {...commonProps} />;
+        return <ListView {...commonProps} onCompleteSchedule={handleCompleteSchedule} />;
       default:
-        return <Dashboard {...commonProps} />;
+        return <Dashboard {...commonProps} onViewChange={handleViewChange} onOpenSettings={handleSettingsOpen} onCompleteSchedule={handleCompleteSchedule} />;
     }
   };
 
@@ -168,6 +241,14 @@ function App() {
         onViewChange={handleViewChange}
         onSettingsOpen={handleSettingsOpen}
         onMenuToggle={handleMenuToggle}
+        notificationCount={upcomingReminderCount}
+        notificationsEnabled={notificationEnabled}
+        onCheckReminders={checkReminders}
+        onTestNotification={testNotification}
+        onToggleNotifications={toggleNotifications}
+        onRequestPermission={requestPermission}
+        notificationPermission={notificationPermission}
+        isNotificationSupported={isNotificationSupported}
       />
 
       <div className="flex">
@@ -197,6 +278,16 @@ function App() {
         isOpen={scheduleFormOpen}
         onClose={handleCloseScheduleForm}
         onSave={handleSaveSchedule}
+      />
+
+      {/* 設定モーダル */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        schedules={schedules}
+        notificationPermission={notificationPermission}
+        onToggleNotifications={toggleNotifications}
+        onImportSchedules={handleImportSchedules}
       />
 
       {/* サイドバーオーバーレイ（モバイル） */}

@@ -91,13 +91,15 @@ export const createBackup = (): void => {
 
 // データのエクスポート（CSV形式）
 export const exportToCSV = (schedules: Schedule[]): string => {
-  const headers = ['件名', '日付', '時間', 'カテゴリ', '優先度', '詳細'];
+  const headers = ['件名', '日付', '開始時間', '終了時間', 'カテゴリ', '優先度', 'ステータス', '詳細'];
   const rows = schedules.map(schedule => [
     schedule.title,
     schedule.date,
     schedule.time,
+    schedule.endTime || '',
     schedule.category,
     schedule.priority,
+    schedule.status || 'pending',
     schedule.description || ''
   ]);
   
