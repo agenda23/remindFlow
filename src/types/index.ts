@@ -63,3 +63,22 @@ export interface FilterConditions {
   };
 }
 
+// 通知履歴の型定義
+export interface NotificationHistoryEntry {
+  id: string;
+  scheduleId?: string;
+  title: string;
+  body: string;
+  createdAt: string; // ISO string
+  read: boolean;
+}
+
+// 高度検索の型定義
+export interface AdvancedSearchFilters {
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  searchMode: 'AND' | 'OR';
+}
+

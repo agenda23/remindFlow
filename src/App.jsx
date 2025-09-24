@@ -9,6 +9,7 @@ import CalendarView from './components/Views/CalendarView';
 import ListView from './components/Views/ListView';
 import ScheduleForm from './components/Schedule/ScheduleForm';
 import SettingsModal from './components/Settings/SettingsModal';
+import NotificationHistoryModal from './components/Settings/NotificationHistoryModal';
 import { calculateReminderTime } from './utils/notifications';
 import { formatLocalDateYYYYMMDD } from '@/lib/utils';
 import { loadSettings } from '@/utils/storage';
@@ -23,6 +24,7 @@ function App() {
   const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     categories: [],
@@ -282,6 +284,7 @@ function App() {
         onRequestPermission={requestPermission}
         notificationPermission={notificationPermission}
         isNotificationSupported={isNotificationSupported}
+        onOpenNotificationHistory={() => setHistoryOpen(true)}
       />
 
       <div className="flex">
@@ -322,6 +325,12 @@ function App() {
         onToggleNotifications={toggleNotifications}
         onImportSchedules={handleImportSchedules}
         onSaved={handleSettingsSaved}
+      />
+
+      {/* 通知履歴モーダル */}
+      <NotificationHistoryModal
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
       />
 
       {/* サイドバーオーバーレイ（モバイル） */}

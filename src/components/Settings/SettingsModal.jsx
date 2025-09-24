@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { saveSettings, loadSettings, exportToCSV } from '@/utils/storage';
+import { saveSettings, loadSettings, exportToCSV, exportToICS } from '@/utils/storage';
 
 const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onToggleNotifications, onImportSchedules, onSaved }) => {
   const [settingsState, setSettingsState] = useState(null);
@@ -55,6 +55,17 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
     const a = document.createElement('a');
     a.href = url;
     a.download = `schedules_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportICS = () => {
+    const ics = exportToICS(schedules || []);
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `schedules_${new Date().toISOString().slice(0,10)}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -227,6 +238,7 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 <Label>エクスポート</Label>
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" onClick={handleExportCSV}>CSVエクスポート</Button>
+                  <Button variant="outline" onClick={handleExportICS}>ICSエクスポート</Button>
                   <Button variant="outline" onClick={handleExportJSON}>JSONバックアップ</Button>
                 </div>
               </div>

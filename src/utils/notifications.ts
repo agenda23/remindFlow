@@ -1,4 +1,5 @@
-import { Schedule, NotificationSettings } from '../types';
+import { Schedule, NotificationSettings, NotificationHistoryEntry } from '../types';
+import { addNotificationHistory } from './storage';
 
 // 通知許可の要求
 export const requestNotificationPermission = async (): Promise<boolean> => {
@@ -34,6 +35,19 @@ export const showNotification = (
     tag: schedule.id,
     requireInteraction: true
   });
+
+  // 履歴に追加
+  try {
+    const entry: NotificationHistoryEntry = {
+      id: `nh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      scheduleId: schedule.id,
+      title: `リマインダー: ${schedule.title}`,
+      body: notification.body || '',
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+    addNotificationHistory(entry);
+  } catch {}
 
   // 通知クリック時の処理
   notification.onclick = () => {

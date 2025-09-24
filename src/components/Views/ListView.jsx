@@ -20,6 +20,10 @@ const ListView = ({
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedSchedules, setSelectedSchedules] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    dateRange: { start: '', end: '' },
+    searchMode: 'AND'
+  });
 
   // フィルタリングとソート済みの予定リスト
   const filteredAndSortedSchedules = useMemo(() => {
@@ -28,10 +32,11 @@ const ListView = ({
     // 検索フィルター
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(schedule => 
+      const matches = (schedule) => (
         schedule.title.toLowerCase().includes(term) ||
         (schedule.description && schedule.description.toLowerCase().includes(term))
       );
+      filtered = filtered.filter(matches);
     }
 
     // カテゴリフィルター
@@ -49,30 +54,42 @@ const ListView = ({
       filtered = filtered.filter(schedule => (schedule.status || 'pending') === filterStatus);
     }
 
+    // 高度検索（日付範囲 + AND/OR）
+    if (advancedFilters.dateRange?.start && advancedFilters.dateRange?.end) {
+      const start = new Date(advancedFilters.dateRange.start);
+      const end = new Date(advancedFilters.dateRange.end);
+      const inRange = (d) => {
+        const dd = new Date(d);
+        return dd >= start && dd <= end;
+      };
+      // いまは日付条件のみのためAND/ORで挙動は同じ。将来条件追加に備え分岐を保持
+      if (advancedFilters.searchMode === 'AND') {
+        filtered = filtered.filter((s) => inRange(s.date));
+      } else {
+        filtered = filtered.filter((s) => inRange(s.date));
+      }
+    }
+
     // ソート
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'time':
           const dateCompare = a.date.localeCompare(b.date);
           return dateCompare !== 0 ? dateCompare : a.time.localeCompare(b.time);
-        
         case 'priority':
           const priorityOrder = { high: 3, medium: 2, low: 1 };
           const priorityCompare = priorityOrder[b.priority] - priorityOrder[a.priority];
           return priorityCompare !== 0 ? priorityCompare : a.title.localeCompare(b.title);
-        
         case 'title':
           return a.title.localeCompare(b.title);
-        
         case 'category':
           const categoryCompare = a.category.localeCompare(b.category);
           return categoryCompare !== 0 ? categoryCompare : a.title.localeCompare(b.title);
-        
         default:
           return 0;
       }
     });
-  }, [schedules, searchTerm, filterCategory, filterPriority, sortBy]);
+  }, [schedules, searchTerm, filterCategory, filterPriority, filterStatus, sortBy, advancedFilters]);
 
   // 全選択/全解除
   const handleSelectAll = (checked) => {
@@ -95,7 +112,6 @@ const ListView = ({
   // 選択した予定を削除
   const handleDeleteSelected = () => {
     if (selectedSchedules.length === 0) return;
-    
     if (window.confirm(`選択した${selectedSchedules.length}件の予定を削除しますか？`)) {
       selectedSchedules.forEach(id => onDeleteSchedule(id));
       setSelectedSchedules([]);
@@ -107,7 +123,9 @@ const ListView = ({
     setSearchTerm('');
     setFilterCategory('all');
     setFilterPriority('all');
+    setFilterStatus('all');
     setSortBy('time');
+    setAdvancedFilters({ dateRange: { start: '', end: '' }, searchMode: 'AND' });
   };
 
   const getCategoryLabel = (category) => {
@@ -173,7 +191,7 @@ const ListView = ({
                 <Filter className="h-4 w-4 mr-2" />
                 フィルター
               </Button>
-              {(searchTerm || filterCategory !== 'all' || filterPriority !== 'all' || sortBy !== 'time') && (
+              {(searchTerm || filterCategory !== 'all' || filterPriority !== 'all' || filterStatus !== 'all' || sortBy !== 'time' || advancedFilters.dateRange.start || advancedFilters.dateRange.end) && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   クリア
                 </Button>
@@ -248,6 +266,44 @@ const ListView = ({
                     <SelectItem value="completed">完了</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* 高度検索 */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    日付範囲（開始）
+                  </label>
+                  <Input
+                    type="date"
+                    value={advancedFilters.dateRange.start}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateRange: { ...advancedFilters.dateRange, start: e.target.value } })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    日付範囲（終了）
+                  </label>
+                  <Input
+                    type="date"
+                    value={advancedFilters.dateRange.end}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateRange: { ...advancedFilters.dateRange, end: e.target.value } })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    条件モード
+                  </label>
+                  <Select value={advancedFilters.searchMode} onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, searchMode: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AND">AND</SelectItem>
+                      <SelectItem value="OR">OR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}

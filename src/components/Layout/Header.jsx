@@ -1,4 +1,4 @@
-import { Bell, Calendar, Settings, Menu } from 'lucide-react';
+import { Bell, Calendar, Settings, Menu, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -21,7 +21,8 @@ const Header = ({
   onToggleNotifications,
   onRequestPermission,
   notificationPermission,
-  isNotificationSupported
+  isNotificationSupported,
+  onOpenNotificationHistory
 }) => {
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -93,6 +94,9 @@ const Header = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onToggleNotifications?.(!notificationsEnabled); }}>
                       通知を{notificationsEnabled ? '無効化' : '有効化'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onOpenNotificationHistory?.(); }}>
+                      通知履歴を表示
                     </DropdownMenuItem>
                     {notificationPermission !== 'granted' && (
                       <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onRequestPermission?.(); }}>
