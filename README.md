@@ -131,7 +131,7 @@ MIT License
 
 ## 作成者
 
-Manus AI Assistant
+agenda23
 
 ---
 
