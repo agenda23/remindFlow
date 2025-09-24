@@ -3,6 +3,7 @@ import { Calendar, Clock, Bell, TrendingUp, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ScheduleCard from '../Schedule/ScheduleCard';
+import { formatLocalDateYYYYMMDD } from '@/lib/utils';
 
 const Dashboard = ({ 
   schedules, 
@@ -13,7 +14,7 @@ const Dashboard = ({
   onOpenSettings,
   onCompleteSchedule
 }) => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDateYYYYMMDD(new Date());
   const now = new Date();
 
   // 今日の予定を取得

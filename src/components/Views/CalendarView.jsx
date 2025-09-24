@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatLocalDateYYYYMMDD } from '@/lib/utils';
 
 const CalendarView = ({ 
   schedules, 
@@ -15,13 +16,11 @@ const CalendarView = ({
 
   // 月の最初と最後の日を取得
   const monthStart = useMemo(() => {
-    const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    return start;
+    return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   }, [currentDate]);
 
   const monthEnd = useMemo(() => {
-    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    return end;
+    return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   }, [currentDate]);
 
   // カレンダーに表示する日付の配列を生成
@@ -37,14 +36,14 @@ const CalendarView = ({
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
       
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatLocalDateYYYYMMDD(date);
       const daySchedules = schedules.filter(schedule => schedule.date === dateStr);
       
       days.push({
         date: new Date(date),
         dateStr,
         isCurrentMonth: date.getMonth() === currentDate.getMonth(),
-        isToday: dateStr === new Date().toISOString().split('T')[0],
+        isToday: dateStr === formatLocalDateYYYYMMDD(new Date()),
         schedules: daySchedules
       });
     }
@@ -62,13 +61,13 @@ const CalendarView = ({
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
       
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatLocalDateYYYYMMDD(date);
       const daySchedules = schedules.filter(schedule => schedule.date === dateStr);
       
       days.push({
         date: new Date(date),
         dateStr,
-        isToday: dateStr === new Date().toISOString().split('T')[0],
+        isToday: dateStr === formatLocalDateYYYYMMDD(new Date()),
         schedules: daySchedules
       });
     }

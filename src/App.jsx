@@ -10,6 +10,7 @@ import ListView from './components/Views/ListView';
 import ScheduleForm from './components/Schedule/ScheduleForm';
 import SettingsModal from './components/Settings/SettingsModal';
 import { calculateReminderTime } from './utils/notifications';
+import { formatLocalDateYYYYMMDD } from '@/lib/utils';
 
 // Hooks
 import { useSchedules } from './hooks/useSchedules';
@@ -64,7 +65,7 @@ function App() {
   }, []);
 
   // 今日これからのリマインダー数
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatLocalDateYYYYMMDD(new Date());
   const notificationEnabled = !!notificationSettings?.enabled;
   const upcomingReminderCount = schedules.filter((s) => {
     if (!notificationEnabled) return false;

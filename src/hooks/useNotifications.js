@@ -6,6 +6,7 @@ import {
   startReminderService 
 } from '../utils/notifications';
 import { loadSettings, saveSettings } from '../utils/storage';
+import { formatLocalDateYYYYMMDD } from '@/lib/utils';
 
 export const useNotifications = (schedules) => {
   const [notificationPermission, setNotificationPermission] = useState(
@@ -73,7 +74,7 @@ export const useNotifications = (schedules) => {
       id: 'test',
       title: 'テスト通知',
       description: 'これはテスト通知です',
-      date: new Date().toISOString().split('T')[0],
+      date: formatLocalDateYYYYMMDD(new Date()),
       time: new Date().toTimeString().slice(0, 5)
     };
 
