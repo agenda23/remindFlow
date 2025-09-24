@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { saveSettings, loadSettings, exportToCSV } from '@/utils/storage';
 
-const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onToggleNotifications, onImportSchedules }) => {
+const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onToggleNotifications, onImportSchedules, onSaved }) => {
   const [settingsState, setSettingsState] = useState(null);
   const [importError, setImportError] = useState('');
 
@@ -44,6 +44,7 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
     if (typeof settingsState.notification.enabled === 'boolean') {
       await onToggleNotifications?.(settingsState.notification.enabled);
     }
+    onSaved?.(settingsState);
     onClose();
   };
 

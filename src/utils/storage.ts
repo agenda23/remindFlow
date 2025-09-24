@@ -26,10 +26,29 @@ const DEFAULT_SETTINGS: AppSettings = {
   }
 };
 
+// UTF-8対応のBase64エンコード/デコード
+const encodeBase64 = (input: string): string => {
+  const utf8 = new TextEncoder().encode(input);
+  let binary = '';
+  utf8.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+};
+
+const decodeBase64 = (b64: string): string => {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+};
+
 // 予定データの保存
 export const saveSchedules = (schedules: Schedule[]): void => {
   try {
-    const encrypted = btoa(JSON.stringify(schedules));
+    const encrypted = encodeBase64(JSON.stringify(schedules));
     localStorage.setItem(STORAGE_KEYS.SCHEDULES, encrypted);
   } catch (error) {
     console.error('予定データの保存に失敗しました:', error);
@@ -42,7 +61,7 @@ export const loadSchedules = (): Schedule[] => {
     const encrypted = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
     if (!encrypted) return [];
     
-    const decrypted = atob(encrypted);
+    const decrypted = decodeBase64(encrypted);
     return JSON.parse(decrypted);
   } catch (error) {
     console.error('予定データの読み込みに失敗しました:', error);
@@ -113,12 +132,14 @@ export const exportToCSV = (schedules: Schedule[]): string => {
 // ストレージ使用量の取得
 export const getStorageUsage = (): { used: number; total: number } => {
   let used = 0;
-  
-  for (const key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      used += localStorage[key].length;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      const value = localStorage.getItem(key);
+      used += (value?.length || 0) + key.length;
     }
-  }
+  } catch {}
   
   // ブラウザの制限は通常5-10MB程度
   const total = 5 * 1024 * 1024; // 5MB

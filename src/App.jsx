@@ -11,6 +11,7 @@ import ScheduleForm from './components/Schedule/ScheduleForm';
 import SettingsModal from './components/Settings/SettingsModal';
 import { calculateReminderTime } from './utils/notifications';
 import { formatLocalDateYYYYMMDD } from '@/lib/utils';
+import { loadSettings } from '@/utils/storage';
 
 // Hooks
 import { useSchedules } from './hooks/useSchedules';
@@ -37,7 +38,8 @@ function App() {
     deleteSchedule,
     searchSchedules,
     filterSchedules,
-    generateRecurringSchedules
+    generateRecurringSchedules,
+    completeSchedule
   } = useSchedules();
 
   const {
@@ -157,7 +159,6 @@ function App() {
   };
 
   // 予定の完了/未完了切替
-  const { completeSchedule } = useSchedules();
   const handleCompleteSchedule = (scheduleId, completed) => {
     completeSchedule(scheduleId, completed);
   };
@@ -221,6 +222,37 @@ function App() {
       default:
         return <Dashboard {...commonProps} onViewChange={handleViewChange} onOpenSettings={handleSettingsOpen} onCompleteSchedule={handleCompleteSchedule} />;
     }
+  };
+
+  // 表示設定の適用（テーマ/フォントサイズ）
+  const applyDisplaySettings = (settings) => {
+    if (!settings) return;
+    const root = document.documentElement;
+    // テーマ
+    const isDark = settings.display?.theme === 'dark';
+    root.classList.toggle('dark', !!isDark);
+    // フォントサイズ
+    const sizeClassMap = { small: 'text-sm', medium: 'text-base', large: 'text-lg' };
+    const classesToRemove = ['text-sm', 'text-base', 'text-lg'];
+    classesToRemove.forEach((c) => root.classList.remove(c));
+    const sizeKey = settings.display?.fontSize || 'medium';
+    const sizeClass = sizeClassMap[sizeKey] || 'text-base';
+    root.classList.add(sizeClass);
+  };
+
+  // 初回マウント時に保存済み設定を反映
+  useEffect(() => {
+    try {
+      const s = loadSettings();
+      applyDisplaySettings(s);
+    } catch (e) {
+      console.debug('Failed to apply display settings on mount', e);
+    }
+  }, []);
+
+  // 設定保存後に即時反映するためのハンドラ
+  const handleSettingsSaved = (savedSettings) => {
+    applyDisplaySettings(savedSettings);
   };
 
   if (loading) {
@@ -289,6 +321,7 @@ function App() {
         notificationPermission={notificationPermission}
         onToggleNotifications={toggleNotifications}
         onImportSchedules={handleImportSchedules}
+        onSaved={handleSettingsSaved}
       />
 
       {/* サイドバーオーバーレイ（モバイル） */}
