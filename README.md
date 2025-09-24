@@ -1,0 +1,139 @@
+# RemindFlow - 予定管理リマインダー
+
+日毎の予定を管理し、設定に基づいたリマインダー通知を提供するWebアプリケーションです。
+
+## 特徴
+
+- **予定管理**: 件名、日時、カテゴリ、優先度を設定した予定の作成・編集・削除
+- **リマインダー通知**: ブラウザ通知APIを使用したリマインダー機能
+- **複数ビュー**: ダッシュボード、カレンダー、リスト表示の切り替え
+- **フィルタリング**: カテゴリや優先度による予定の絞り込み
+- **検索機能**: 予定の件名や詳細での検索
+- **ローカルストレージ**: データはブラウザに安全に保存
+- **レスポンシブデザイン**: PC・タブレット・スマートフォンに対応
+- **オフライン対応**: インターネット接続なしでも利用可能
+
+## 技術スタック
+
+- **フロントエンド**: React 18 + TypeScript
+- **スタイリング**: Tailwind CSS + shadcn/ui
+- **アイコン**: Lucide React
+- **ビルドツール**: Vite
+- **デプロイ**: GitHub Pages
+
+## 機能一覧
+
+### 予定管理
+- 予定の作成・編集・削除
+- 件名、詳細、日時、カテゴリ、優先度の設定
+- 繰り返し予定の設定（日次/週次/月次/年次）
+
+### 通知機能
+- リマインダー通知（0分前〜24時間前）
+- 通知音の選択
+- 通知の有効/無効切り替え
+
+### 表示機能
+- ダッシュボード: 今日の予定と統計の表示
+- カレンダー: 月間・週間ビューでの予定表示
+- リスト: 検索・フィルタリング機能付きの一覧表示
+
+### データ管理
+- ローカルストレージでの安全なデータ保存
+- データの暗号化
+- インポート/エクスポート機能（予定）
+
+## 使用方法
+
+### 予定の作成
+1. 「新しい予定」ボタンをクリック
+2. 必要な情報を入力
+3. 「作成」ボタンで保存
+
+### 通知の設定
+1. 予定作成時にリマインダー設定を調整
+2. 通知タイミングと通知音を選択
+3. ブラウザの通知許可が必要
+
+### ビューの切り替え
+- ヘッダーのボタンでダッシュボード・カレンダー・一覧を切り替え
+- サイドバーからも同様の操作が可能
+
+## GitHub Pagesでのデプロイ
+
+このアプリケーションはGitHub Pagesでの運用を前提に設計されています。
+
+### デプロイ手順
+
+1. GitHubリポジトリを作成
+2. ソースコードをプッシュ
+3. GitHub Pagesの設定でソースを「GitHub Actions」に変更
+4. 以下のワークフローファイルを `.github/workflows/deploy.yml` として作成:
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+```
+
+## 開発
+
+### 必要な環境
+- Node.js 18以上
+- npm または pnpm
+
+### セットアップ
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+# プロダクションビルド
+npm run build
+```
+
+## ライセンス
+
+MIT License
+
+## 作成者
+
+Manus AI Assistant
+
+---
+
+このアプリケーションは、日常の予定管理を効率化し、重要な予定を見逃さないようにサポートします。
+
