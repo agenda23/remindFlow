@@ -7,6 +7,7 @@ import Sidebar from './components/Layout/Sidebar';
 import Dashboard from './components/Views/Dashboard';
 import CalendarView from './components/Views/CalendarView';
 import ListView from './components/Views/ListView';
+import ArchiveView from './components/Views/ArchiveView';
 import ScheduleForm from './components/Schedule/ScheduleForm';
 import SettingsModal from './components/Settings/SettingsModal';
 import NotificationHistoryModal from './components/Settings/NotificationHistoryModal';
@@ -92,11 +93,11 @@ function App() {
     }
   })();
 
-  // フィルタリングされた予定リスト
+  // フィルタリングされた予定リスト（通常ビュー用にアーカイブを除外）
   const filteredSchedules = filterSchedules(
     searchTerm ? searchSchedules(searchTerm) : schedules,
     filters
-  );
+  ).filter((s) => !s.archived);
 
   // 予定フォームを開く
   const handleAddSchedule = () => {
@@ -141,6 +142,11 @@ function App() {
     if (window.confirm('この予定を削除しますか？')) {
       deleteSchedule(scheduleId);
     }
+  };
+
+  // アーカイブ復元
+  const handleRestoreSchedule = (scheduleId) => {
+    updateSchedule(scheduleId, { archived: false });
   };
 
   // スケジュールの一括インポート（JSON）
@@ -233,6 +239,16 @@ function App() {
         return <CalendarView {...commonProps} onDateSelect={handleDateSelect} />;
       case 'list':
         return <ListView {...commonProps} onCompleteSchedule={handleCompleteSchedule} />;
+      case 'archive': {
+        // アーカイブビューは全スケジュールからarchivedのみ表示したい
+        return (
+          <ArchiveView
+            schedules={schedules}
+            onRestoreSchedule={handleRestoreSchedule}
+            onDeleteSchedule={handleDeleteSchedule}
+          />
+        );
+      }
       default:
         return <Dashboard {...commonProps} onViewChange={handleViewChange} onOpenSettings={handleSettingsOpen} onCompleteSchedule={handleCompleteSchedule} />;
     }

@@ -1,4 +1,4 @@
-import { Calendar, List, Home, Plus, Filter, Search } from 'lucide-react';
+import { Calendar, List, Home, Plus, Filter, Search, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -15,7 +15,8 @@ const Sidebar = ({
   const menuItems = [
     { key: 'dashboard', label: 'ダッシュボード', icon: Home },
     { key: 'calendar', label: 'カレンダー', icon: Calendar },
-    { key: 'list', label: '予定一覧', icon: List }
+    { key: 'list', label: '予定一覧', icon: List },
+    { key: 'archive', label: 'アーカイブ一覧', icon: Archive }
   ];
 
   const categories = [
