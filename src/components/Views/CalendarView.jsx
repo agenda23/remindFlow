@@ -254,12 +254,13 @@ const CalendarView = ({
                       isOngoing = now >= start && now < end;
                     } catch {}
                   }
+                  const isArchived = !!schedule.archived;
                   return (
                     <div
                       key={schedule.id}
                       className={`
                         text-xs p-1 rounded cursor-pointer truncate
-                        ${getPriorityColor(schedule.priority)} text-white
+                        ${isArchived ? 'bg-gray-400 text-white' : `${getPriorityColor(schedule.priority)} text-white`}
                         hover:opacity-80 transition-opacity
                         ${isOngoing ? 'ring-2 ring-blue-300' : ''}
                       `}

@@ -236,7 +236,8 @@ function App() {
       case 'dashboard':
         return <Dashboard {...commonProps} onViewChange={handleViewChange} onOpenSettings={handleSettingsOpen} onCompleteSchedule={handleCompleteSchedule} />;
       case 'calendar':
-        return <CalendarView {...commonProps} onDateSelect={handleDateSelect} />;
+        // カレンダーはアーカイブも含めて表示するため、全スケジュールを渡す
+        return <CalendarView {...commonProps} schedules={schedules} onDateSelect={handleDateSelect} />;
       case 'list':
         return <ListView {...commonProps} onCompleteSchedule={handleCompleteSchedule} />;
       case 'archive': {
