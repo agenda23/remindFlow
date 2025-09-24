@@ -37,7 +37,7 @@ const NotificationHistoryModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="p-4 space-y-4">
-          <div className="flex items-center justify-end space-x-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
               <CheckCircle2 className="h-4 w-4 mr-2" />
               すべて既読にする
@@ -55,9 +55,9 @@ const NotificationHistoryModal = ({ isOpen, onClose }) => {
               {entries.map((e) => (
                 <li key={e.id} className="py-3">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <p className={`font-medium ${e.read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>{e.title}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{e.body}</p>
+                    <div className="min-w-0">
+                      <p className={`font-medium break-words ${e.read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>{e.title}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 break-words">{e.body}</p>
                       <p className="text-xs text-gray-500 mt-1">{new Date(e.createdAt).toLocaleString()}</p>
                     </div>
                     {!e.read && (

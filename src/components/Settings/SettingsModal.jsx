@@ -131,8 +131,8 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <Bell className="h-5 w-5 text-gray-500" />
               <h3 className="text-base font-medium text-gray-900 dark:text-white">通知設定</h3>
             </div>
-            <div className="space-y-4 pl-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 sm:pl-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <Label>通知を有効にする</Label>
                   <p className="text-xs text-gray-500">現在の権限: {notificationPermission}</p>
@@ -143,14 +143,14 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <Label>デフォルトの通知タイミング</Label>
                   <Select
                     value={String(settingsState?.notification.defaultMinutesBefore ?? 15)}
                     onValueChange={(v) => handleNotificationChange('defaultMinutesBefore', parseInt(v))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -164,13 +164,13 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                   </Select>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label>通知音</Label>
                   <Select
                     value={settingsState?.notification.defaultSound || 'chime'}
                     onValueChange={(v) => handleNotificationChange('defaultSound', v)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -190,14 +190,14 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <Paintbrush className="h-5 w-5 text-gray-500" />
               <h3 className="text-base font-medium text-gray-900 dark:text-white">表示設定</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:pl-6">
+              <div className="space-y-2">
                 <Label>テーマ</Label>
                 <Select
                   value={settingsState?.display.theme || 'light'}
                   onValueChange={(v) => handleDisplayChange('theme', v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -208,13 +208,13 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 </Select>
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label>フォントサイズ</Label>
                 <Select
                   value={settingsState?.display.fontSize || 'medium'}
                   onValueChange={(v) => handleDisplayChange('fontSize', v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,10 +233,10 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <Download className="h-5 w-5 text-gray-500" />
               <h3 className="text-base font-medium text-gray-900 dark:text-white">データ管理</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:pl-6">
               <div className="space-y-2">
                 <Label>エクスポート</Label>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" onClick={handleExportCSV}>CSVエクスポート</Button>
                   <Button variant="outline" onClick={handleExportICS}>ICSエクスポート</Button>
                   <Button variant="outline" onClick={handleExportJSON}>JSONバックアップ</Button>
@@ -245,7 +245,7 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
 
               <div className="space-y-2">
                 <Label>インポート（JSON）</Label>
-                <Input type="file" accept="application/json" onChange={handleImportJSON} />
+                <Input className="w-full" type="file" accept="application/json" onChange={handleImportJSON} />
                 {importError && (
                   <p className="text-sm text-red-600">{importError}</p>
                 )}
