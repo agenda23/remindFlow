@@ -12,7 +12,7 @@ import SettingsModal from './components/Settings/SettingsModal';
 import NotificationHistoryModal from './components/Settings/NotificationHistoryModal';
 import { calculateReminderTime } from './utils/notifications';
 import { formatLocalDateYYYYMMDD } from '@/lib/utils';
-import { loadSettings } from '@/utils/storage';
+import { loadSettings, countUnreadNotifications } from '@/utils/storage';
 
 // Hooks
 import { useSchedules } from './hooks/useSchedules';
@@ -82,6 +82,14 @@ function App() {
       return false;
     }
   }).length;
+
+  const unreadHistoryCount = (() => {
+    try {
+      return countUnreadNotifications();
+    } catch {
+      return 0;
+    }
+  })();
 
   // フィルタリングされた予定リスト
   const filteredSchedules = filterSchedules(
@@ -184,17 +192,18 @@ function App() {
   // 日付選択時の処理（カレンダーから）
   const handleDateSelect = (date) => {
     // 選択した日付で新しい予定を作成
+    const settings = (() => { try { return loadSettings(); } catch { return null; } })();
     setEditingSchedule({
       title: '',
       description: '',
       date: date,
       time: '09:00',
-      category: 'personal',
+      category: settings?.defaults?.category || 'personal',
       priority: 'medium',
       reminder: {
-        enabled: true,
-        minutesBefore: 15,
-        sound: 'chime',
+        enabled: settings?.notification?.enabled ?? true,
+        minutesBefore: settings?.notification?.defaultMinutesBefore ?? 15,
+        sound: settings?.notification?.defaultSound || 'chime',
         repeat: false
       },
       recurrence: {
@@ -276,7 +285,7 @@ function App() {
         onViewChange={handleViewChange}
         onSettingsOpen={handleSettingsOpen}
         onMenuToggle={handleMenuToggle}
-        notificationCount={upcomingReminderCount}
+        notificationCount={upcomingReminderCount + unreadHistoryCount}
         notificationsEnabled={notificationEnabled}
         onCheckReminders={checkReminders}
         onTestNotification={testNotification}

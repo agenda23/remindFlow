@@ -38,6 +38,16 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
     }));
   };
 
+  const handleDefaultsChange = (key, value) => {
+    setSettingsState(prev => ({
+      ...prev,
+      defaults: {
+        ...(prev.defaults || {}),
+        [key]: value
+      }
+    }));
+  };
+
   const saveAll = async () => {
     if (!settingsState) return;
     saveSettings(settingsState);
@@ -249,6 +259,33 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 {importError && (
                   <p className="text-sm text-red-600">{importError}</p>
                 )}
+              </div>
+            </div>
+          </section>
+
+          {/* 作成時デフォルト */}
+          <section className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Paintbrush className="h-5 w-5 text-gray-500" />
+              <h3 className="text-base font-medium text-gray-900 dark:text-white">作成時デフォルト</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:pl-6">
+              <div className="space-y-2">
+                <Label>デフォルトのカテゴリ</Label>
+                <Select
+                  value={settingsState?.defaults?.category || 'personal'}
+                  onValueChange={(v) => handleDefaultsChange('category', v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="work">仕事</SelectItem>
+                    <SelectItem value="personal">個人</SelectItem>
+                    <SelectItem value="family">家族</SelectItem>
+                    <SelectItem value="other">その他</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </section>

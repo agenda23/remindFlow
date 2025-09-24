@@ -45,6 +45,7 @@ export interface DisplaySettings {
 export interface AppSettings {
   notification: NotificationSettings;
   display: DisplaySettings;
+  defaults?: DefaultSettings;
 }
 
 // ビューモードの型定義
@@ -80,5 +81,10 @@ export interface AdvancedSearchFilters {
     end: string;
   };
   searchMode: 'AND' | 'OR';
+}
+
+// 作成時デフォルト設定
+export interface DefaultSettings {
+  category: 'work' | 'personal' | 'family' | 'other';
 }
 

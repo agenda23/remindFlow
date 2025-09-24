@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { loadSettings } from '@/utils/storage';
 
 const ScheduleForm = ({ 
   schedule = null, 
@@ -42,16 +43,27 @@ const ScheduleForm = ({
         endTime: schedule.endTime || ''
       });
     } else {
-      // 新規作成時のデフォルト値
+      // 新規作成時のデフォルト値（設定を反映）
       const now = new Date();
       const today = now.toISOString().split('T')[0];
       const currentTime = now.toTimeString().slice(0, 5);
+      let defaults = null;
+      try {
+        defaults = loadSettings();
+      } catch {}
       
       setFormData(prev => ({
         ...prev,
         date: today,
         time: currentTime,
-        endTime: ''
+        endTime: '',
+        category: defaults?.defaults?.category || prev.category,
+        reminder: {
+          ...prev.reminder,
+          enabled: defaults?.notification?.enabled ?? prev.reminder.enabled,
+          minutesBefore: defaults?.notification?.defaultMinutesBefore ?? prev.reminder.minutesBefore,
+          sound: defaults?.notification?.defaultSound || prev.reminder.sound
+        }
       }));
     }
   }, [schedule]);

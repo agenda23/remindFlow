@@ -24,6 +24,9 @@ const DEFAULT_SETTINGS: AppSettings = {
       medium: '#f59e0b',
       low: '#10b981'
     }
+  },
+  defaults: {
+    category: 'personal'
   }
 };
 
@@ -85,7 +88,15 @@ export const loadSettings = (): AppSettings => {
     const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     if (!stored) return DEFAULT_SETTINGS;
     
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+    // 深いマージ（defaultsやnotification, displayの部分的欠落を補完）
+    const parsed = JSON.parse(stored);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      notification: { ...DEFAULT_SETTINGS.notification, ...(parsed?.notification || {}) },
+      display: { ...DEFAULT_SETTINGS.display, ...(parsed?.display || {}) },
+      defaults: { ...DEFAULT_SETTINGS.defaults, ...(parsed?.defaults || {}) }
+    };
   } catch (error) {
     console.error('設定の読み込みに失敗しました:', error);
     return DEFAULT_SETTINGS;
@@ -212,5 +223,14 @@ export const addNotificationHistory = (entry: NotificationHistoryEntry): void =>
   // 上限（直近100件）
   const capped = entries.slice(0, 100);
   saveNotificationHistory(capped);
+};
+
+// 未読件数の取得
+export const countUnreadNotifications = (): number => {
+  try {
+    return loadNotificationHistory().filter((e) => !e.read).length;
+  } catch {
+    return 0;
+  }
 };
 

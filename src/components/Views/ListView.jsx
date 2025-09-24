@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, SortAsc, Plus, Trash2, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,36 @@ const ListView = ({
     dateRange: { start: '', end: '' },
     searchMode: 'AND'
   });
+
+  // フィルタ状態の保存/復元
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('remindflow_list_filters');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setSearchTerm(saved.searchTerm || '');
+        setSortBy(saved.sortBy || 'time');
+        setFilterCategory(saved.filterCategory || 'all');
+        setFilterPriority(saved.filterPriority || 'all');
+        setFilterStatus(saved.filterStatus || 'all');
+        setAdvancedFilters(saved.advancedFilters || { dateRange: { start: '', end: '' }, searchMode: 'AND' });
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      const toSave = {
+        searchTerm,
+        sortBy,
+        filterCategory,
+        filterPriority,
+        filterStatus,
+        advancedFilters
+      };
+      localStorage.setItem('remindflow_list_filters', JSON.stringify(toSave));
+    } catch {}
+  }, [searchTerm, sortBy, filterCategory, filterPriority, filterStatus, advancedFilters]);
 
   // フィルタリングとソート済みの予定リスト
   const filteredAndSortedSchedules = useMemo(() => {

@@ -36,6 +36,11 @@ export const showNotification = (
     requireInteraction: true
   });
 
+  try {
+    const soundName = schedule?.reminder?.sound || settings?.defaultSound || 'chime';
+    playNotificationSound(soundName);
+  } catch {}
+
   // 履歴に追加
   try {
     const entry: NotificationHistoryEntry = {
