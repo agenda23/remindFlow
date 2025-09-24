@@ -36,37 +36,41 @@ const ScheduleForm = ({
 
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (schedule) {
-      setFormData({
-        ...schedule,
-        endTime: schedule.endTime || ''
-      });
-    } else {
-      // 新規作成時のデフォルト値（設定を反映）
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const currentTime = now.toTimeString().slice(0, 5);
-      let defaults = null;
-      try {
-        defaults = loadSettings();
-      } catch {}
-      
-      setFormData(prev => ({
-        ...prev,
-        date: today,
-        time: currentTime,
-        endTime: '',
-        category: defaults?.defaults?.category || prev.category,
-        reminder: {
-          ...prev.reminder,
-          enabled: defaults?.notification?.enabled ?? prev.reminder.enabled,
-          minutesBefore: defaults?.notification?.defaultMinutesBefore ?? prev.reminder.minutesBefore,
-          sound: defaults?.notification?.defaultSound || prev.reminder.sound
-        }
-      }));
+useEffect(() => {
+  if (!isOpen) return;
+  if (schedule) {
+    setFormData({
+      ...schedule,
+      endTime: schedule.endTime || ''
+    });
+    return;
+  }
+
+  // 新規作成時のデフォルト値（設定を反映）
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().slice(0, 5);
+  let defaults = null;
+  try {
+    defaults = loadSettings();
+  } catch {
+    // noop
+  }
+  
+  setFormData(prev => ({
+    ...prev,
+    date: today,
+    time: currentTime,
+    endTime: '',
+    category: defaults?.defaults?.category || prev.category,
+    reminder: {
+      ...prev.reminder,
+      enabled: defaults?.notification?.enabled ?? prev.reminder.enabled,
+      minutesBefore: defaults?.notification?.defaultMinutesBefore ?? prev.reminder.minutesBefore,
+      sound: defaults?.notification?.defaultSound || prev.reminder.sound
     }
-  }, [schedule]);
+  }));
+}, [schedule, isOpen]);
 
   const validateForm = () => {
     const newErrors = {};

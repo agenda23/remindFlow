@@ -225,10 +225,10 @@ export const addNotificationHistory = (entry: NotificationHistoryEntry): void =>
   saveNotificationHistory(capped);
 };
 
-// 未読件数の取得
 export const countUnreadNotifications = (): number => {
   try {
-    return loadNotificationHistory().filter((e) => !e.read).length;
+    const list = loadNotificationHistory();
+    return list.filter((e) => !e.read).length;
   } catch {
     return 0;
   }

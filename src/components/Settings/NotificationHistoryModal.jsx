@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { loadNotificationHistory, saveNotificationHistory } from '@/utils/storage';
 import { X, CheckCircle2, Trash2 } from 'lucide-react';
 
-const NotificationHistoryModal = ({ isOpen, onClose }) => {
+const NotificationHistoryModal = ({ isOpen, onClose, onChanged }) => {
   const [entries, setEntries] = useState([]);
 
   useEffect(() => {
@@ -16,12 +16,14 @@ const NotificationHistoryModal = ({ isOpen, onClose }) => {
     const updated = entries.map(e => ({ ...e, read: true }));
     setEntries(updated);
     saveNotificationHistory(updated);
+    try { onChanged?.(); } catch { /* noop */ }
   };
 
   const clearAll = () => {
     if (!window.confirm('通知履歴をすべて削除しますか？')) return;
     setEntries([]);
     saveNotificationHistory([]);
+    try { onChanged?.(); } catch { /* noop */ }
   };
 
   if (!isOpen) return null;

@@ -30,16 +30,18 @@ export const useNotifications = (schedules) => {
 
   // 設定の更新
   const updateNotificationSettings = useCallback((newSettings) => {
+    // 常にストレージの最新をベースにマージして、他セクション（display/defaults）を上書きしない
+    const persisted = loadSettings();
     const updatedSettings = {
-      ...settings,
+      ...persisted,
       notification: {
-        ...settings.notification,
+        ...(persisted?.notification || {}),
         ...newSettings
       }
     };
     setSettings(updatedSettings);
     saveSettings(updatedSettings);
-  }, [settings]);
+  }, []);
 
   // リマインダーサービスの開始
   const startReminders = useCallback(() => {

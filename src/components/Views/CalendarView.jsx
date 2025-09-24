@@ -8,7 +8,6 @@ const CalendarView = ({
   schedules, 
   onAddSchedule, 
   onEditSchedule, 
-  onDeleteSchedule,
   onDateSelect 
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -19,9 +18,10 @@ const CalendarView = ({
     return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   }, [currentDate]);
 
-  const monthEnd = useMemo(() => {
-    return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-  }, [currentDate]);
+  // 月末は現在未使用
+  // const monthEnd = useMemo(() => {
+  //   return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  // }, [currentDate]);
 
   // カレンダーに表示する日付の配列を生成
   const calendarDays = useMemo(() => {
@@ -211,7 +211,7 @@ const CalendarView = ({
 
         {/* 日付グリッド */}
         <div className={`grid grid-cols-7 ${viewMode === 'month' ? 'grid-rows-6' : 'grid-rows-1'}`}>
-          {displayDays.map((day, index) => (
+          {displayDays.map((day) => (
             <div
               key={day.dateStr}
               className={`

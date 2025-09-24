@@ -118,18 +118,17 @@ export const useSchedules = () => {
   const sortSchedules = useCallback((scheduleList, sortBy = 'time') => {
     return [...scheduleList].sort((a, b) => {
       switch (sortBy) {
-        case 'time':
+        case 'time': {
           const dateCompare = a.date.localeCompare(b.date);
           return dateCompare !== 0 ? dateCompare : a.time.localeCompare(b.time);
-        
-        case 'priority':
+        }
+        case 'priority': {
           const priorityOrder = { high: 3, medium: 2, low: 1 };
           const priorityCompare = priorityOrder[b.priority] - priorityOrder[a.priority];
           return priorityCompare !== 0 ? priorityCompare : a.title.localeCompare(b.title);
-        
+        }
         case 'title':
           return a.title.localeCompare(b.title);
-        
         default:
           return 0;
       }

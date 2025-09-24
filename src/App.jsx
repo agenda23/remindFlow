@@ -50,6 +50,7 @@ function App() {
     toggleNotifications,
     checkReminders,
     testNotification,
+    updateNotificationSettings,
     settings: notificationSettings,
     isSupported: isNotificationSupported
   } = useNotifications(schedules);
@@ -264,6 +265,14 @@ function App() {
   // 設定保存後に即時反映するためのハンドラ
   const handleSettingsSaved = (savedSettings) => {
     applyDisplaySettings(savedSettings);
+    try {
+      if (savedSettings?.notification) {
+        // 通知設定もフック内の状態に即時反映
+        updateNotificationSettings(savedSettings.notification);
+      }
+    } catch (e) {
+      console.debug('Failed to update notification settings after save', e);
+    }
   };
 
   if (loading) {
@@ -340,6 +349,10 @@ function App() {
       <NotificationHistoryModal
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
+        onChanged={() => {
+          // 履歴の未読件数を含むバッジ再計算のためにnowを更新
+          setNow(new Date());
+        }}
       />
 
       {/* サイドバーオーバーレイ（モバイル） */}

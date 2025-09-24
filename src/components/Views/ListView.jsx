@@ -38,7 +38,9 @@ const ListView = ({
         setFilterStatus(saved.filterStatus || 'all');
         setAdvancedFilters(saved.advancedFilters || { dateRange: { start: '', end: '' }, searchMode: 'AND' });
       }
-    } catch {}
+    } catch {
+      // noop
+    }
   }, []);
 
   useEffect(() => {
@@ -52,7 +54,9 @@ const ListView = ({
         advancedFilters
       };
       localStorage.setItem('remindflow_list_filters', JSON.stringify(toSave));
-    } catch {}
+    } catch {
+      // noop
+    }
   }, [searchTerm, sortBy, filterCategory, filterPriority, filterStatus, advancedFilters]);
 
   // フィルタリングとソート済みの予定リスト
@@ -103,18 +107,21 @@ const ListView = ({
     // ソート
     return filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'time':
+        case 'time': {
           const dateCompare = a.date.localeCompare(b.date);
           return dateCompare !== 0 ? dateCompare : a.time.localeCompare(b.time);
-        case 'priority':
+        }
+        case 'priority': {
           const priorityOrder = { high: 3, medium: 2, low: 1 };
           const priorityCompare = priorityOrder[b.priority] - priorityOrder[a.priority];
           return priorityCompare !== 0 ? priorityCompare : a.title.localeCompare(b.title);
+        }
         case 'title':
           return a.title.localeCompare(b.title);
-        case 'category':
+        case 'category': {
           const categoryCompare = a.category.localeCompare(b.category);
           return categoryCompare !== 0 ? categoryCompare : a.title.localeCompare(b.title);
+        }
         default:
           return 0;
       }
@@ -158,24 +165,7 @@ const ListView = ({
     setAdvancedFilters({ dateRange: { start: '', end: '' }, searchMode: 'AND' });
   };
 
-  const getCategoryLabel = (category) => {
-    switch (category) {
-      case 'work': return '仕事';
-      case 'personal': return '個人';
-      case 'family': return '家族';
-      case 'other': return 'その他';
-      default: return 'すべて';
-    }
-  };
-
-  const getPriorityLabel = (priority) => {
-    switch (priority) {
-      case 'high': return '高';
-      case 'medium': return '中';
-      case 'low': return '低';
-      default: return 'すべて';
-    }
-  };
+  // ラベル関数は未使用のため削除（必要になれば再導入）
 
   return (
     <div className="space-y-4">

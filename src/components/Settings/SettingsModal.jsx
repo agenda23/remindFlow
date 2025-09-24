@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Bell, Settings, Download, Upload, Paintbrush } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { saveSettings, loadSettings, exportToCSV, exportToICS } from '@/utils/storage';
 
-const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onToggleNotifications, onImportSchedules, onSaved }) => {
+const SettingsModal = ({ isOpen, onClose, schedules, onToggleNotifications, onImportSchedules, onSaved }) => {
   const [settingsState, setSettingsState] = useState(null);
   const [importError, setImportError] = useState('');
 
@@ -26,6 +26,10 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
         [key]: value
       }
     }));
+    // 有効/無効は即時反映（保存前でも体感を合わせる）
+    if (key === 'enabled') {
+      try { onToggleNotifications?.(!!value); } catch { /* noop */ }
+    }
   };
 
   const handleDisplayChange = (key, value) => {
@@ -104,13 +108,21 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
       if (json.settings) {
         saveSettings(json.settings);
         setSettingsState(json.settings);
+        try {
+          // 通知の有効/無効を即時適用
+          if (typeof json.settings?.notification?.enabled === 'boolean') {
+            await onToggleNotifications?.(json.settings.notification.enabled);
+          }
+          // 表示/通知設定の即時反映（テーマ/フォントサイズ/音/秒数など）
+          onSaved?.(json.settings);
+        } catch { /* noop */ }
       }
       if (Array.isArray(json.schedules) && json.schedules.length > 0) {
         await onImportSchedules?.(json.schedules);
       }
       setImportError('');
       alert('インポートが完了しました。必要に応じて画面を確認してください。');
-    } catch (e) {
+  } catch {
       setImportError('JSONの読み込みに失敗しました。ファイル形式を確認してください。');
     } finally {
       event.target.value = '';
@@ -118,6 +130,34 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
   };
 
   if (!isOpen) return null;
+
+  // 設定ロード前はプレースホルダーを表示（既存値の未反映に見えないように）
+  if (isOpen && !settingsState) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+              <Settings className="h-5 w-5" />
+              <span>設定</span>
+            </h2>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-300">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+              <span>設定を読み込み中...</span>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="outline" onClick={onClose}>閉じる</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -135,6 +175,7 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
 
         {/* 本文 */}
         <div className="p-6 space-y-8">
+          {/* ラベル用の補助関数は不要のため削除 */}
           {/* 通知設定 */}
           <section className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -145,7 +186,6 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <Label>通知を有効にする</Label>
-                  <p className="text-xs text-gray-500">現在の権限: {notificationPermission}</p>
                 </div>
                 <Switch
                   checked={!!settingsState?.notification.enabled}
@@ -157,11 +197,12 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 <div className="space-y-2">
                   <Label>デフォルトの通知タイミング</Label>
                   <Select
+                    key={`minutes-${String(settingsState?.notification.defaultMinutesBefore ?? 15)}`}
                     value={String(settingsState?.notification.defaultMinutesBefore ?? 15)}
                     onValueChange={(v) => handleNotificationChange('defaultMinutesBefore', parseInt(v))}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="選択してください" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0">開始時刻</SelectItem>
@@ -177,11 +218,12 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
                 <div className="space-y-2">
                   <Label>通知音</Label>
                   <Select
+                    key={`sound-${settingsState?.notification.defaultSound || 'chime'}`}
                     value={settingsState?.notification.defaultSound || 'chime'}
                     onValueChange={(v) => handleNotificationChange('defaultSound', v)}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="選択してください" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="chime">チャイム</SelectItem>
@@ -204,11 +246,12 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <div className="space-y-2">
                 <Label>テーマ</Label>
                 <Select
+                  key={`theme-${settingsState?.display.theme || 'light'}`}
                   value={settingsState?.display.theme || 'light'}
                   onValueChange={(v) => handleDisplayChange('theme', v)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder="選択してください" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="light">ライト</SelectItem>
@@ -221,11 +264,12 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <div className="space-y-2">
                 <Label>フォントサイズ</Label>
                 <Select
+                  key={`font-${settingsState?.display.fontSize || 'medium'}`}
                   value={settingsState?.display.fontSize || 'medium'}
                   onValueChange={(v) => handleDisplayChange('fontSize', v)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder="選択してください" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="small">小</SelectItem>
@@ -273,11 +317,12 @@ const SettingsModal = ({ isOpen, onClose, schedules, notificationPermission, onT
               <div className="space-y-2">
                 <Label>デフォルトのカテゴリ</Label>
                 <Select
+                  key={`defcat-${settingsState?.defaults?.category || 'personal'}`}
                   value={settingsState?.defaults?.category || 'personal'}
                   onValueChange={(v) => handleDefaultsChange('category', v)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder="選択してください" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="work">仕事</SelectItem>

@@ -66,17 +66,20 @@ const Sidebar = ({
 
         {/* メニュー */}
         <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map(({ key, label, icon: Icon }) => (
-            <Button
-              key={key}
-              variant={currentView === key ? 'default' : 'ghost'}
-              className="w-full justify-start"
-              onClick={() => onViewChange(key)}
-            >
-              <Icon className="h-4 w-4 mr-3" />
-              {label}
-            </Button>
-          ))}
+          {menuItems.map(({ key, label, icon }) => {
+            const IconEl = icon;
+            return (
+              <Button
+                key={key}
+                variant={currentView === key ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => onViewChange(key)}
+              >
+                <IconEl className="h-4 w-4 mr-3" />
+                {label}
+              </Button>
+            );
+          })}
         </nav>
 
         {/* フィルター */}
