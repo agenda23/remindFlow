@@ -3,7 +3,8 @@ import {
   requestNotificationPermission, 
   showNotification, 
   checkTodayReminders,
-  startReminderService 
+  startReminderService,
+  primeNotificationSounds
 } from '../utils/notifications';
 import { loadSettings, saveSettings } from '../utils/storage';
 import { formatLocalDateYYYYMMDD } from '@/lib/utils';
@@ -25,6 +26,10 @@ export const useNotifications = (schedules) => {
   const requestPermission = useCallback(async () => {
     const granted = await requestNotificationPermission();
     setNotificationPermission(granted ? 'granted' : 'denied');
+    // 許可後に音源をアンロック
+    if (granted) {
+      try { await primeNotificationSounds(settings?.notification); } catch {}
+    }
     return granted;
   }, []);
 
@@ -80,6 +85,8 @@ export const useNotifications = (schedules) => {
       time: new Date().toTimeString().slice(0, 5)
     };
 
+    // テストはユーザー操作イベント発火中なので、ここで音源アンロックも実施
+    try { primeNotificationSounds(settings?.notification); } catch {}
     showNotification(testSchedule, settings?.notification || {});
     return true;
   }, [notificationPermission, settings]);
@@ -115,13 +122,15 @@ export const useNotifications = (schedules) => {
     updateNotificationSettings({ enabled });
     
     if (enabled) {
+      // 有効化直後に音源アンロック
+      try { await primeNotificationSounds(settings?.notification); } catch {}
       startReminders();
     } else {
       stopReminders();
     }
 
     return true;
-  }, [notificationPermission, requestPermission, updateNotificationSettings, startReminders, stopReminders]);
+  }, [notificationPermission, requestPermission, updateNotificationSettings, startReminders, stopReminders, settings]);
 
   // 予定が変更されたときにリマインダーを再開
   useEffect(() => {

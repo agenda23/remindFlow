@@ -9,12 +9,13 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(),tailwindcss()],
-  base: '/remindFlow/',
+export default defineConfig(({ command }) => ({
+  plugins: [react(), tailwindcss()],
+  // 開発では'/'、ビルド時のみ'/remindFlow/'を使用
+  base: command === 'build' ? '/remindFlow/' : '/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-})
+}))

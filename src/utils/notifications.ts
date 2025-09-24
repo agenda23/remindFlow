@@ -1,6 +1,44 @@
 import { Schedule, NotificationSettings, NotificationHistoryEntry } from '../types';
 import { addNotificationHistory } from './storage';
 
+// ベースURL（GitHub Pagesなどでのサブパス配信に対応）
+const BASE_URL = (import.meta as any)?.env?.BASE_URL || '/';
+
+// 音源候補（フォールバック順）
+const SOUND_CANDIDATES = ['chime', 'bell', 'notification'] as const;
+
+// 共有Audio要素（ブラウザの自動再生制限の緩和に利用）
+let sharedAudio: HTMLAudioElement | null = null;
+let audioUnlocked = false;
+
+const getSoundUrlCandidates = (soundName: string): string[] => {
+  const primary = `${BASE_URL}sounds/${soundName}.mp3`; // 例: /remindFlow/sounds/x.mp3
+  const absoluteRoot = `/sounds/${soundName}.mp3`;      // 例: /sounds/x.mp3
+  const relative = `sounds/${soundName}.mp3`;           // 例: sounds/x.mp3（現在パスに相対）
+  return Array.from(new Set([primary, absoluteRoot, relative]));
+};
+
+// ユーザー操作由来のイベントで呼び出し、オーディオを「解放」しておく
+export const primeNotificationSounds = async (settings?: NotificationSettings): Promise<void> => {
+  try {
+    if (!sharedAudio) {
+      sharedAudio = new Audio();
+    }
+    // 可能なら軽量の音源をミュートで一度再生→停止してアンロック
+    const candidate = (settings?.defaultSound && SOUND_CANDIDATES.includes(settings.defaultSound as any)) ? settings.defaultSound : SOUND_CANDIDATES[0];
+    const urls = getSoundUrlCandidates(candidate as string);
+    sharedAudio.src = urls[0];
+    sharedAudio.muted = true;
+    await sharedAudio.play().catch(() => {});
+    sharedAudio.pause();
+    sharedAudio.currentTime = 0;
+    sharedAudio.muted = false;
+    audioUnlocked = true;
+  } catch {
+    // noop（アンロックはベストエフォート）
+  }
+};
+
 // 通知許可の要求
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (!('Notification' in window)) {
@@ -31,7 +69,7 @@ export const showNotification = (
 
   const notification = new Notification(`リマインダー: ${schedule.title}`, {
     body: schedule.description || `${schedule.date} ${schedule.time}の予定です`,
-    icon: '/favicon.ico',
+    icon: `${BASE_URL}favicon.ico`,
     tag: schedule.id,
     requireInteraction: true
   });
@@ -102,18 +140,34 @@ export const checkTodayReminders = (
     });
 };
 
-// 通知音の再生
+// 通知音の再生（フォールバックとBASE_URL対応、共有Audioで再生）
 export const playNotificationSound = (soundName: string): void => {
-  try {
-    // 実際の実装では音声ファイルを用意する必要があります
-    const audio = new Audio(`/sounds/${soundName}.mp3`);
-    audio.volume = 0.5;
-    audio.play().catch(error => {
+  (async () => {
+    try {
+      if (!sharedAudio) {
+        sharedAudio = new Audio();
+      }
+
+      // 再生候補のリストを作成
+      const nameCandidates = [soundName, ...SOUND_CANDIDATES.filter((n) => n !== soundName)];
+
+      for (const name of nameCandidates) {
+        const urlCandidates = getSoundUrlCandidates(name);
+        for (const url of urlCandidates) {
+          try {
+            sharedAudio.src = url;
+            sharedAudio.volume = 0.5;
+            await sharedAudio.play();
+            return; // 成功
+          } catch (err) {
+            // 次のURL候補へ
+          }
+        }
+      }
+    } catch (error) {
       console.warn('通知音の再生に失敗しました:', error);
-    });
-  } catch (error) {
-    console.warn('通知音の再生に失敗しました:', error);
-  }
+    }
+  })();
 };
 
 // 定期的なリマインダーチェック
