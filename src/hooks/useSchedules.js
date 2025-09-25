@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { saveSchedules, loadSchedules } from '../utils/storage';
+import { parseLocalDateYYYYMMDD } from '@/lib/utils';
 
 export const useSchedules = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const DEFAULT_DURATION_MINUTES = 60; // endTimeがない場合の仮想終了時間
+
+  const createLocalDateTime = (dateStr, timeStr) => {
+    try {
+      const base = parseLocalDateYYYYMMDD(dateStr);
+      const [hh, mm] = (timeStr || '00:00').split(':').map((v) => parseInt(v, 10) || 0);
+      base.setHours(hh, mm, 0, 0);
+      return base;
+    } catch {
+      return new Date(`${dateStr}T${timeStr || '00:00'}`);
+    }
+  };
 
   // 初期データの読み込み
   useEffect(() => {
@@ -38,9 +50,9 @@ export const useSchedules = () => {
       setSchedules(prev => prev.map(schedule => {
         if (schedule.archived) return schedule;
         try {
-          const start = new Date(`${schedule.date}T${schedule.time}`);
+          const start = createLocalDateTime(schedule.date, schedule.time);
           const end = schedule.endTime
-            ? new Date(`${schedule.date}T${schedule.endTime}`)
+            ? createLocalDateTime(schedule.date, schedule.endTime)
             : new Date(start.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
           if (now > end) {
             return { ...schedule, archived: true };
@@ -207,7 +219,7 @@ export const useSchedules = () => {
   const getPastSchedules = useCallback(() => {
     const now = new Date();
     return schedules.filter(schedule => {
-      const scheduleDateTime = new Date(`${schedule.date}T${schedule.time}`);
+      const scheduleDateTime = createLocalDateTime(schedule.date, schedule.time);
       return scheduleDateTime < now;
     });
   }, [schedules]);
