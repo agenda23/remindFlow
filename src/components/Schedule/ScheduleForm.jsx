@@ -73,6 +73,11 @@ useEffect(() => {
       }
     };
     console.log('ScheduleForm: フォームデータを設定しました', newFormData); // デバッグログ追加
+    console.log('ScheduleForm: 通知設定の詳細', {
+      'defaults?.notification?.defaultMinutesBefore': defaults?.notification?.defaultMinutesBefore,
+      'prev.reminder.minutesBefore': prev.reminder.minutesBefore,
+      '最終的なminutesBefore': newFormData.reminder.minutesBefore
+    }); // デバッグログ追加
     return newFormData;
   });
 }, [schedule, isOpen]);
@@ -316,6 +321,7 @@ useEffect(() => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
                 <div>
                   <Label htmlFor="minutesBefore">通知タイミング</Label>
+                  {console.log('ScheduleForm: 通知タイミングの値', formData.reminder.minutesBefore, '文字列化:', formData.reminder.minutesBefore.toString())}
                   <Select 
                     value={formData.reminder.minutesBefore.toString()} 
                     onValueChange={(value) => handleReminderChange('minutesBefore', parseInt(value))}
