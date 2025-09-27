@@ -283,6 +283,7 @@ function App() {
 
   // 設定保存後に即時反映するためのハンドラ
   const handleSettingsSaved = (savedSettings) => {
+    console.log('App: 設定が保存されました', savedSettings); // デバッグログ追加
     applyDisplaySettings(savedSettings);
     try {
       if (savedSettings?.notification) {

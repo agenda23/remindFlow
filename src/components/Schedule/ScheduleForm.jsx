@@ -53,23 +53,28 @@ useEffect(() => {
   let defaults = null;
   try {
     defaults = loadSettings();
-  } catch {
-    // noop
+    console.log('ScheduleForm: 設定を読み込みました', defaults); // デバッグログ追加
+  } catch (error) {
+    console.error('ScheduleForm: 設定の読み込みに失敗しました', error);
   }
   
-  setFormData(prev => ({
-    ...prev,
-    date: today,
-    time: currentTime,
-    endTime: '',
-    category: defaults?.defaults?.category || prev.category,
-    reminder: {
-      ...prev.reminder,
-      enabled: defaults?.notification?.enabled ?? prev.reminder.enabled,
-      minutesBefore: defaults?.notification?.defaultMinutesBefore ?? prev.reminder.minutesBefore,
-      sound: defaults?.notification?.defaultSound || prev.reminder.sound
-    }
-  }));
+  setFormData(prev => {
+    const newFormData = {
+      ...prev,
+      date: today,
+      time: currentTime,
+      endTime: '',
+      category: defaults?.defaults?.category || prev.category,
+      reminder: {
+        ...prev.reminder,
+        enabled: defaults?.notification?.enabled ?? prev.reminder.enabled,
+        minutesBefore: defaults?.notification?.defaultMinutesBefore ?? prev.reminder.minutesBefore,
+        sound: defaults?.notification?.defaultSound || prev.reminder.sound
+      }
+    };
+    console.log('ScheduleForm: フォームデータを設定しました', newFormData); // デバッグログ追加
+    return newFormData;
+  });
 }, [schedule, isOpen]);
 
   const validateForm = () => {

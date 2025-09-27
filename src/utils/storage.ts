@@ -76,7 +76,9 @@ export const loadSchedules = (): Schedule[] => {
 // 設定の保存
 export const saveSettings = (settings: AppSettings): void => {
   try {
+    console.log('Storage: 設定を保存します', settings); // デバッグログ追加
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    console.log('Storage: 設定の保存が完了しました'); // デバッグログ追加
   } catch (error) {
     console.error('設定の保存に失敗しました:', error);
   }
@@ -86,17 +88,22 @@ export const saveSettings = (settings: AppSettings): void => {
 export const loadSettings = (): AppSettings => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    if (!stored) return DEFAULT_SETTINGS;
+    if (!stored) {
+      console.log('Storage: 保存された設定がありません。デフォルト設定を返します'); // デバッグログ追加
+      return DEFAULT_SETTINGS;
+    }
     
     // 深いマージ（defaultsやnotification, displayの部分的欠落を補完）
     const parsed = JSON.parse(stored);
-    return {
+    const merged = {
       ...DEFAULT_SETTINGS,
       ...parsed,
       notification: { ...DEFAULT_SETTINGS.notification, ...(parsed?.notification || {}) },
       display: { ...DEFAULT_SETTINGS.display, ...(parsed?.display || {}) },
       defaults: { ...DEFAULT_SETTINGS.defaults, ...(parsed?.defaults || {}) }
     };
+    console.log('Storage: 設定を読み込みました', merged); // デバッグログ追加
+    return merged;
   } catch (error) {
     console.error('設定の読み込みに失敗しました:', error);
     return DEFAULT_SETTINGS;

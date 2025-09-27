@@ -54,6 +54,7 @@ const SettingsModal = ({ isOpen, onClose, schedules, onToggleNotifications, onIm
 
   const saveAll = async () => {
     if (!settingsState) return;
+    console.log('SettingsModal: 設定を保存します', settingsState); // デバッグログ追加
     saveSettings(settingsState);
     if (typeof settingsState.notification.enabled === 'boolean') {
       await onToggleNotifications?.(settingsState.notification.enabled);
