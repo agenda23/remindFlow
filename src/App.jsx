@@ -53,7 +53,8 @@ function App() {
     testNotification,
     updateNotificationSettings,
     settings: notificationSettings,
-    isSupported: isNotificationSupported
+    isSupported: isNotificationSupported,
+    clearScheduledNotification
   } = useNotifications(schedules);
 
   // 通知許可の初期要求
@@ -140,6 +141,9 @@ function App() {
   // 予定の削除
   const handleDeleteSchedule = (scheduleId) => {
     if (window.confirm('この予定を削除しますか？')) {
+      console.log('App: 予定を削除します', { scheduleId });
+      // スケジュール済みの通知をクリア
+      clearScheduledNotification(scheduleId);
       deleteSchedule(scheduleId);
     }
   };

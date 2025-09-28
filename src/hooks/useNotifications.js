@@ -4,7 +4,9 @@ import {
   showNotification, 
   checkTodayReminders,
   startReminderService,
-  primeNotificationSounds
+  primeNotificationSounds,
+  clearScheduledNotification,
+  clearAllScheduledNotifications
 } from '../utils/notifications';
 import { loadSettings, saveSettings } from '../utils/storage';
 import { formatLocalDateYYYYMMDD } from '@/lib/utils';
@@ -50,25 +52,40 @@ export const useNotifications = (schedules) => {
 
   // リマインダーサービスの開始
   const startReminders = useCallback(() => {
+    console.log('useNotifications: リマインダーサービス開始要求', {
+      settingsEnabled: settings?.notification?.enabled,
+      permission: notificationPermission,
+      schedulesCount: schedules?.length
+    });
+
     if (!settings?.notification.enabled || notificationPermission !== 'granted') {
+      console.log('useNotifications: リマインダーサービス開始をスキップ', {
+        reason: !settings?.notification?.enabled ? '設定で無効' : '許可されていない'
+      });
       return;
     }
 
     // 既存のインターバルをクリア
     if (reminderIntervalRef.current) {
       clearInterval(reminderIntervalRef.current);
+      console.log('useNotifications: 既存のインターバルをクリア');
     }
 
     // 新しいインターバルを設定
     reminderIntervalRef.current = startReminderService(schedules, settings.notification);
+    console.log('useNotifications: 新しいリマインダーサービス開始', { intervalId: reminderIntervalRef.current });
   }, [schedules, settings, notificationPermission]);
 
   // リマインダーサービスの停止
   const stopReminders = useCallback(() => {
+    console.log('useNotifications: リマインダーサービス停止要求', { intervalId: reminderIntervalRef.current });
     if (reminderIntervalRef.current) {
       clearInterval(reminderIntervalRef.current);
       reminderIntervalRef.current = null;
+      console.log('useNotifications: リマインダーサービス停止完了');
     }
+    // スケジュール済みの通知もクリア
+    clearAllScheduledNotifications();
   }, []);
 
   // 手動で通知をテスト
@@ -161,6 +178,7 @@ export const useNotifications = (schedules) => {
     checkReminders,
     showScheduleNotification,
     toggleNotifications,
+    clearScheduledNotification,
     isSupported: typeof Notification !== 'undefined'
   };
 };

@@ -63,46 +63,74 @@ export const showNotification = (
   schedule: Schedule,
   settings: NotificationSettings
 ): void => {
+  console.log('Notifications: 通知表示開始', {
+    scheduleId: schedule.id,
+    title: schedule.title,
+    settingsEnabled: settings.enabled,
+    permission: Notification.permission
+  });
+
   if (!settings.enabled || Notification.permission !== 'granted') {
+    console.log('Notifications: 通知をスキップ', {
+      reason: !settings.enabled ? '設定で無効' : '許可されていない',
+      settingsEnabled: settings.enabled,
+      permission: Notification.permission
+    });
     return;
   }
 
-  const notification = new Notification(`リマインダー: ${schedule.title}`, {
-    body: schedule.description || `${schedule.date} ${schedule.time}の予定です`,
-    icon: `${BASE_URL}favicon.ico`,
-    tag: schedule.id,
-    requireInteraction: true
-  });
-
   try {
-    const soundName = schedule?.reminder?.sound || settings?.defaultSound || 'chime';
-    playNotificationSound(soundName);
-  } catch {}
+    const notification = new Notification(`リマインダー: ${schedule.title}`, {
+      body: schedule.description || `${schedule.date} ${schedule.time}の予定です`,
+      icon: `${BASE_URL}favicon.ico`,
+      tag: schedule.id,
+      requireInteraction: true
+    });
 
-  // 履歴に追加
-  try {
-    const entry: NotificationHistoryEntry = {
-      id: `nh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      scheduleId: schedule.id,
-      title: `リマインダー: ${schedule.title}`,
-      body: notification.body || '',
-      createdAt: new Date().toISOString(),
-      read: false
+    console.log('Notifications: 通知オブジェクト作成成功', { scheduleId: schedule.id });
+
+    try {
+      const soundName = schedule?.reminder?.sound || settings?.defaultSound || 'chime';
+      console.log('Notifications: 通知音再生開始', { soundName });
+      playNotificationSound(soundName);
+    } catch (error) {
+      console.warn('Notifications: 通知音再生失敗', error);
+    }
+
+    // 履歴に追加
+    try {
+      const entry: NotificationHistoryEntry = {
+        id: `nh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        scheduleId: schedule.id,
+        title: `リマインダー: ${schedule.title}`,
+        body: notification.body || '',
+        createdAt: new Date().toISOString(),
+        read: false
+      };
+      addNotificationHistory(entry);
+      console.log('Notifications: 通知履歴追加', { entryId: entry.id });
+    } catch (error) {
+      console.warn('Notifications: 通知履歴追加失敗', error);
+    }
+
+    // 通知クリック時の処理
+    notification.onclick = () => {
+      console.log('Notifications: 通知クリック', { scheduleId: schedule.id });
+      window.focus();
+      notification.close();
+      // 該当予定の詳細表示などの処理をここに追加
     };
-    addNotificationHistory(entry);
-  } catch {}
 
-  // 通知クリック時の処理
-  notification.onclick = () => {
-    window.focus();
-    notification.close();
-    // 該当予定の詳細表示などの処理をここに追加
-  };
+    // 自動で閉じる
+    setTimeout(() => {
+      console.log('Notifications: 通知自動クローズ', { scheduleId: schedule.id });
+      notification.close();
+    }, settings.displayDuration * 1000);
 
-  // 自動で閉じる
-  setTimeout(() => {
-    notification.close();
-  }, settings.displayDuration * 1000);
+    console.log('Notifications: 通知表示完了', { scheduleId: schedule.id });
+  } catch (error) {
+    console.error('Notifications: 通知表示失敗', { scheduleId: schedule.id, error });
+  }
 };
 
 // 予定のリマインダー時刻を計算
@@ -114,6 +142,9 @@ export const calculateReminderTime = (schedule: Schedule): Date => {
   return reminderTime;
 };
 
+// 通知の管理用Map（重複防止）
+const scheduledNotifications = new Map<string, NodeJS.Timeout>();
+
 // 今日のリマインダーをチェック
 export const checkTodayReminders = (
   schedules: Schedule[],
@@ -121,6 +152,8 @@ export const checkTodayReminders = (
 ): void => {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
+
+  console.log('Notifications: リマインダーチェック開始', { now: now.toISOString(), today });
 
   schedules
     .filter(schedule => 
@@ -131,11 +164,39 @@ export const checkTodayReminders = (
       const reminderTime = calculateReminderTime(schedule);
       const timeDiff = reminderTime.getTime() - now.getTime();
 
-      // リマインダー時刻が現在時刻から5分以内の場合
-      if (timeDiff > 0 && timeDiff <= 5 * 60 * 1000) {
-        setTimeout(() => {
+      console.log('Notifications: 予定チェック', {
+        scheduleId: schedule.id,
+        title: schedule.title,
+        scheduleTime: `${schedule.date} ${schedule.time}`,
+        reminderTime: reminderTime.toISOString(),
+        timeDiff: timeDiff,
+        minutesBefore: schedule.reminder.minutesBefore
+      });
+
+      // リマインダー時刻が未来で、まだ通知がスケジュールされていない場合
+      if (timeDiff > 0 && !scheduledNotifications.has(schedule.id)) {
+        console.log('Notifications: 通知をスケジュール', {
+          scheduleId: schedule.id,
+          delayMs: timeDiff,
+          delayMinutes: Math.round(timeDiff / (60 * 1000))
+        });
+
+        const timeoutId = setTimeout(() => {
+          console.log('Notifications: 通知実行', { scheduleId: schedule.id, title: schedule.title });
           showNotification(schedule, settings);
+          scheduledNotifications.delete(schedule.id);
         }, timeDiff);
+
+        scheduledNotifications.set(schedule.id, timeoutId);
+      }
+      // リマインダー時刻が過去の場合（通知し忘れ）
+      else if (timeDiff <= 0 && timeDiff > -60 * 1000) { // 1分以内の遅延は許容
+        console.log('Notifications: 遅延通知を実行', {
+          scheduleId: schedule.id,
+          title: schedule.title,
+          delayMs: timeDiff
+        });
+        showNotification(schedule, settings);
       }
     });
 };
@@ -175,8 +236,35 @@ export const startReminderService = (
   schedules: Schedule[],
   settings: NotificationSettings
 ): NodeJS.Timeout => {
+  console.log('Notifications: リマインダーサービス開始', {
+    schedulesCount: schedules.length,
+    settingsEnabled: settings.enabled
+  });
+
+  // 即座に1回チェック
+  checkTodayReminders(schedules, settings);
+
   return setInterval(() => {
     checkTodayReminders(schedules, settings);
-  }, 60 * 1000); // 1分ごとにチェック
+  }, 30 * 1000); // 30秒ごとにチェック（より頻繁に）
+};
+
+// 通知のクリーンアップ（予定が削除された場合など）
+export const clearScheduledNotification = (scheduleId: string): void => {
+  const timeoutId = scheduledNotifications.get(scheduleId);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    scheduledNotifications.delete(scheduleId);
+    console.log('Notifications: スケジュール済み通知をクリア', { scheduleId });
+  }
+};
+
+// 全てのスケジュール済み通知をクリア
+export const clearAllScheduledNotifications = (): void => {
+  console.log('Notifications: 全スケジュール済み通知をクリア', { count: scheduledNotifications.size });
+  scheduledNotifications.forEach((timeoutId, scheduleId) => {
+    clearTimeout(timeoutId);
+  });
+  scheduledNotifications.clear();
 };
 
